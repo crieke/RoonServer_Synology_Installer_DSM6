@@ -5,7 +5,7 @@ PACKAGE="RoonServer"
 DNAME="RoonServer"
 USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
-ROON_LOG_DIR="${ROON_DIR}/database/RoonServer/Logs"
+ROON_LOG_DIR="${ROON_DIR}/Roon_Database/RoonServer/Logs"
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
