@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Package
+PACKAGE="RoonServer"
+DNAME="RoonServer"
+# Others
+SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
+
+
+preinst ()
+{
+    curl "${wizard_roonbinary_location}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
+    rm ${SYNOPKG_PKGINST_TEMP_DIR}/dummy
+    exit 0
+}
+
+postinst ()
+{    
+    # Check user entry for external Database location
+    if [ "${wizard_dbimport_path}" != "" ] && [ -d "${wizard_dbimport_path}/Roon_Database" ]; then
+            cp -r "${wizard_dbimport_path}/Roon_Database" "${SYNOPKG_PKGDEST}/Roon_Database"
+            sync
+    fi
+
+    exit 0
+}
+
+preuninst ()
+{
+    # Stop the package
+    ${SSS} stop > /dev/null
+
+    # Check for if database should be exported
+    EXPORT_DB_PATH="${wizard_dbexport_path}"/Roon_Database_"$(date +%y%m%d_%H%M%S)"
+    if [ "$wizard_dbexport_path" != "" ]; then
+        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${EXPORT_DB_PATH}" ]; then 
+            mv "${SYNOPKG_PKGDEST}/Roon_Database" "${EXPORT_DB_PATH}"
+            chown -R admin:users "${EXPORT_DB_PATH}"
+            sync
+	    echo "Roon-Database exported."
+        else
+            echo "Roon-Database could not be exported!"
+            exit 1
+        fi
+    fi
+
+    exit 0
+}
+
+postuninst ()
+{
+
+    # Delete Package directory if it contains nothing.
+    if [ ! -d "$(ls -A /usr/syno/etc/packages/${PACKAGE})" ]; then
+        rm -Rf /usr/syno/etc/packages/${PACKAGE}
+    fi
+
+    exit 0
+}
+
+preupgrade ()
+{
+
+    exit 1
+}
+
+postupgrade ()
+{
+
+    exit 1
+}

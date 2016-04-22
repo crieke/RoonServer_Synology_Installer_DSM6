@@ -1,0 +1,8 @@
+#!/bin/sh
+# Package
+PACKAGE="RoonServer"
+DNAME="RoonServer"
+
+
+. `dirname $0`/installer
+`basename $0` > $SYNOPKG_TEMP_LOGFILE
