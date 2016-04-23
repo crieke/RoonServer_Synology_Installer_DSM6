@@ -9,16 +9,19 @@ SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
 
 preinst ()
 {
-    curl "${wizard_roonbinary_location}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
+    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
+        curl "${wizard_roonbinary_location}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
+    fi
+
     exit 0
 }
 
 postinst ()
-{    
+{
     # Check user entry for external Database location
-    if [ "${wizard_dbimport_path}" != "" ] && [ -d "${wizard_dbimport_path}/Roon_Database" ]; then
-            cp -r "${wizard_dbimport_path}/Roon_Database" "${SYNOPKG_PKGDEST}/Roon_Database"
-            sync
+    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ] && [ "${wizard_dbimport_path}" != "" ] && [ -d "${wizard_dbimport_path}/Roon_Database" ]; then
+        cp -r "${wizard_dbimport_path}/Roon_Database" "${SYNOPKG_PKGDEST}/Roon_Database"
+        sync
     fi
 
     exit 0
@@ -31,7 +34,7 @@ preuninst ()
 
     # Check for if database should be exported
     EXPORT_DB_PATH="${wizard_dbexport_path}"/Roon_Database_"$(date +%y%m%d_%H%M%S)"
-    if [ "$wizard_dbexport_path" != "" ]; then
+    if [ "$wizard_dbexport_path" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
         if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${EXPORT_DB_PATH}" ]; then 
             mv "${SYNOPKG_PKGDEST}/Roon_Database" "${EXPORT_DB_PATH}"
             chown -R admin:users "${EXPORT_DB_PATH}"
