@@ -59,12 +59,12 @@ postuninst ()
 
 preupgrade ()
 {
-
-    exit 1
+    mv ${SYNOPKG_PKGDEST}/Roon_Database ${SYNOPKG_PKGINST_TEMP_DIR}/Roon_Database
+    mv ${SYNOPKG_PKGDEST}/RoonServer ${SYNOPKG_PKGINST_TEMP_DIR}/RoonServer
+    exit 0
 }
 
 postupgrade ()
 {
-
-    exit 1
+    exit 0
 }
