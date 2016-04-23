@@ -10,7 +10,6 @@ SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
 preinst ()
 {
     curl "${wizard_roonbinary_location}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
-    rm ${SYNOPKG_PKGINST_TEMP_DIR}/dummy
     exit 0
 }
 
