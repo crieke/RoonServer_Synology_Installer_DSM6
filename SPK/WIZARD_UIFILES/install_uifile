@@ -1,4 +1,19 @@
 [{
+	"step_title": "Before installing...",
+	"items": [{
+		"type": "multiselect",
+		"desc": "This is an installation script for RoonServer for Synology devices. Please note that this is not an official released Installer and will also not be officially supported by Roonlabs LLC.",
+                "subitems": [{
+			"key": "no_official_support",
+			"desc": "I understand!",
+			"validator": {
+				"fn": "{var v=arguments[0]; if (!v) return 'Please read the infobox and click on the \"I understand!\" checkbox.';return true;}"
+			}
+
+		}]
+	}]
+},
+{
 	"step_title": "Import a RoonServer database?",
 	"items": [{
 		"type": "textfield",
