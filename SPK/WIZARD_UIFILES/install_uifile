@@ -17,7 +17,7 @@
 	"step_title": "Import a RoonServer database?",
 	"items": [{
 		"type": "textfield",
-		"desc": "OPTIONAL: Specify a path if you would like to import a Roon-Database (e.g. /volume1/music). The Roon database is a folder named \"Roon_Databse\" and should be located in that directory. If you exported your database before make sure to remove the date und time stamp at the end before you import it again.",
+		"desc": "OPTIONAL: Specify a path if you would like to import a Roon-Database (e.g. /volume1/music). The Roon database is a folder named \"Roon_Database\" and should be located in that directory. If you exported your database before make sure to remove the date und time stamp at the end before you import it again.",
 		"subitems": [{
 			"key": "wizard_dbimport_path",
 			"desc": "Database import location",
