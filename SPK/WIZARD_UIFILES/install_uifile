@@ -2,7 +2,7 @@
 	"step_title": "Before installing...",
 	"items": [{
 		"type": "multiselect",
-		"desc": "This is an installation script for RoonServer for Synology devices. Please note that this is not an official release by RoonLabs LLC and therefore will also not be supported by them.",
+		"desc": "This is an installation script for RoonServer for Synology devices. Please note that this is not an official release by RoonLabs LLC and therefore will not be supported by them.",
                 "subitems": [{
 			"key": "no_official_support",
 			"desc": "I understand!",
