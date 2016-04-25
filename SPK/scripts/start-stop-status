@@ -13,6 +13,12 @@ PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
 start_daemon ()
 {
+    # Check if AudioStation is installed. Check for libasound.so.2 in that library folder. Only needed for Playbach to a USB Audio Device.
+LIBASOUND="/var/packages/AudioStation/target/lib/libasound.so.2"
+    if [ -f $LIBASOUND ] && [ ! -h "${ROON_DIR}/RoonServer/Appliance/libasound.so.2" ]; then 
+        ln -s $LIBASOUND "${ROON_DIR}/RoonServer/Appliance/libasound.so.2"
+    fi
+
     # Launch the service in the background.
     su - root -c "umask 000; export ROON_DATAROOT="$ROON_DIR/Roon_Database"; ${ROON_DIR}/RoonServer/start.sh &"
     # wait for RoonServer to be started...
