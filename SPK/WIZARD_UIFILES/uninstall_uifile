@@ -14,5 +14,12 @@
 				}
 			}
 		}]
+	}, {
+		"type": "multiselect",
+		"desc": "If no location for export is entered, please confirm the deletion of your database.",
+		"subitems": [{
+			"key": "roon_db_deletion",
+			"desc": "Yes, delete my Database"
+		}]
 	}]
 }]
