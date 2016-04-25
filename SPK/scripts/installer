@@ -9,8 +9,19 @@ ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
 
 preinst ()
 {
-    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
+
+
+    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ] && [ "${wizard_dbimport_path}" != "" ]; then
+        if [ -d "${wizard_dbimport_path}/RoonServer" ] && [ -d "${wizard_dbimport_path}/RAATServer" ]; then
+        else
+            do_not_proceed="true"
+            echo 'Import Error: Could not find required folders in your specified directory . ("RoonServer", "RAATServer")'
+            exit 1
+        fi
+    fi
+
+    if [ -z ${do_not_proceed+x} ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
+        curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
 
     exit 0
@@ -18,12 +29,13 @@ preinst ()
 
 postinst ()
 {
-    # Check user entry for external Database location
-    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ] && [ "${wizard_dbimport_path}" != "" ] && [ -d "${wizard_dbimport_path}/Roon_Database" ]; then
-        cp -r "${wizard_dbimport_path}/Roon_Database" "${SYNOPKG_PKGDEST}/Roon_Database"
-        sync
-    fi
+    if [ "${wizard_dbimport_path}" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
+        mkdir "${SYNOPKG_PKGDEST}/Roon_Database"
+        cp -r "${wizard_dbimport_path}/RoonServer" "${SYNOPKG_PKGDEST}/Roon_Database/RoonServer" > /dev/null 2>&1
+        cp -r "${wizard_dbimport_path}/RAATServer" "${SYNOPKG_PKGDEST}/Roon_Database/RAATServer" > /dev/null 2>&1
 
+    fi
+    rm ${SYNOPKG_PKGDEST}/dummy
     exit 0
 }
 
