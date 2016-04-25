@@ -5,12 +5,12 @@ PACKAGE="RoonServer"
 DNAME="RoonServer"
 # Others
 SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
-
+ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
 
 preinst ()
 {
     if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        curl "${wizard_roonbinary_location}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
+        curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR}
     fi
 
     exit 0

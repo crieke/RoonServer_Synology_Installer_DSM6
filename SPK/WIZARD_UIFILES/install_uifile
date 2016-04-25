@@ -25,27 +25,9 @@
 				"allowBlank": true,
 				"regex": {
 					"expr": "/^\\\/volume[0-9]+\\\//",
-					"errorText": "Path should begin with /volume?/ with ? the number of the volume"
+					"errorText": "Path should begin with \"/volume?/\" with ? the number of the volume."
 				}
 			}
 		}]
-	}]
-},
-{
-	"step_title": "RoonServer Binray Download location",
-	"items": [{
-		"type": "textfield",
-		"desc": "Unless, the download location of the RoonServer binary for x64 Linux did not change, you don't need to change anything here.",
-		"subitems": [{
-			"key": "wizard_roonbinary_location",
-			"desc": "Download binary package",
-			"defaultValue": "http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2",
-			"validator": {
-				"allowBlank": false,
-				"regex": {
-					"vtype": "url"
-				}
-			}
-		}]
-	}]
+	}]	
 }]
