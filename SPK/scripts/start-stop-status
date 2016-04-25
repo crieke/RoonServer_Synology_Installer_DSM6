@@ -21,9 +21,6 @@ LIBASOUND="/var/packages/AudioStation/target/lib/libasound.so.2"
 
     # Launch the service in the background.
     su - root -c "umask 000; export ROON_DATAROOT="$ROON_DIR/Roon_Database"; ${ROON_DIR}/RoonServer/start.sh &"
-    # wait for RoonServer to be started...
-#    sleep 4
-    # Wait until the service  is ready (race condition here).
 }
 
 stop_daemon ()
@@ -34,7 +31,7 @@ stop_daemon ()
 
 daemon_status ()
 {
-    ## Check with ps command if RoonServer is running. If RoonServer updates itself the PID changes.
+    ## Check with ps command if RoonServer is running. If RoonServer updates itself, the PID changes.
 
     if [ "$PID" != ""} ] && kill -0 $PID > /dev/null 2>&1; then
         return
