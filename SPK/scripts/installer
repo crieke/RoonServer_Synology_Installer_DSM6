@@ -10,18 +10,15 @@ ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
 preinst ()
 {
 
-
-    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ] && [ "${wizard_dbimport_path}" != "" ]; then
-        if [ -d "${wizard_dbimport_path}/RoonServer" ] && [ -d "${wizard_dbimport_path}/RAATServer" ]; then
-        else
-            do_not_proceed="true"
-            echo 'Import Error: Could not find required folders in your specified directory . ("RoonServer", "RAATServer")'
-            exit 1
+    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
+        if [ "${wizard_dbimport_path}" != "" ]; then
+            if [ ! -d "${wizard_dbimport_path}/RoonServer" ] & [ ! -d "${wizard_dbimport_path}/RAATServer" ]; then
+          #      do_not_proceed="true"
+                echo 'Import Error: Could not find required folders in your specified directory . ("RoonServer", "RAATServer")'
+                exit 1
+            fi
         fi
-    fi
-
-    if [ -z ${do_not_proceed+x} ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
+    curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
 
     exit 0
@@ -33,8 +30,8 @@ postinst ()
         mkdir "${SYNOPKG_PKGDEST}/Roon_Database"
         cp -r "${wizard_dbimport_path}/RoonServer" "${SYNOPKG_PKGDEST}/Roon_Database/RoonServer" > /dev/null 2>&1
         cp -r "${wizard_dbimport_path}/RAATServer" "${SYNOPKG_PKGDEST}/Roon_Database/RAATServer" > /dev/null 2>&1
-
     fi
+
     rm ${SYNOPKG_PKGDEST}/dummy
     exit 0
 }
@@ -45,9 +42,9 @@ preuninst ()
     ${SSS} stop > /dev/null
 
     # Check for if database should be exported
-    EXPORT_DB_PATH="${wizard_dbexport_path}"/Roon_Database_"$(date +%y%m%d_%H%M%S)"
     if [ "$wizard_dbexport_path" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${EXPORT_DB_PATH}" ]; then 
+        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${EXPORT_DB_PATH}" ]; then
+            EXPORT_DB_PATH="${wizard_dbexport_path}"/Roon_Database_"$(date +%y%m%d_%H%M%S)"
             mv "${SYNOPKG_PKGDEST}/Roon_Database" "${EXPORT_DB_PATH}"
             chown -R admin:users "${EXPORT_DB_PATH}"
             sync
