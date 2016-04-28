@@ -21,7 +21,6 @@ preinst ()
     curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
 
-    exit 0
 }
 
 postinst ()
@@ -32,30 +31,28 @@ postinst ()
         cp -r "${wizard_dbimport_path}/RAATServer" "${SYNOPKG_PKGDEST}/Roon_Database/RAATServer" > /dev/null 2>&1
     fi
 
-    rm ${SYNOPKG_PKGDEST}/dummy
-    exit 0
 }
 
 preuninst ()
 {
     # Stop the package
     ${SSS} stop > /dev/null
+    
+    ROON_EXPORT_FOLDER="${wizard_dbexport_path}/Roon_Database_$(date +%y%m%d_%H%M%S)"
 
-    # Check for if database should be exported
+    #Check user entry export path
     if [ "$wizard_dbexport_path" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${EXPORT_DB_PATH}" ]; then
-            EXPORT_DB_PATH="${wizard_dbexport_path}"/Roon_Database_"$(date +%y%m%d_%H%M%S)"
-            mv "${SYNOPKG_PKGDEST}/Roon_Database" "${EXPORT_DB_PATH}"
-            chown -R admin:users "${EXPORT_DB_PATH}"
+        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${ROON_EXPORT_FOLDER}" ]; then
+            mv "${SYNOPKG_PKGDEST}/Roon_Database" "${ROON_EXPORT_FOLDER}"
+            chown -R admin:users "${ROON_EXPORT_FOLDER}"
             sync
-	    echo "Roon-Database exported."
+            echo "Roon-Database exported."
+            exit 0
         else
-            echo "Roon-Database could not be exported!"
+            echo "Export failed! Check your export path entry. Aborting Uninstall."
             exit 1
         fi
     fi
-
-    exit 0
 }
 
 postuninst ()
