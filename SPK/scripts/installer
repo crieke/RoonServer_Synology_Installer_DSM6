@@ -57,6 +57,7 @@ preuninst ()
 
 postuninst ()
 {
+    ## Add an option to export logfiles (like library export)!
 
     # Delete Package directory if it contains nothing.
     if [ ! -d "$(ls -A /usr/syno/etc/packages/${PACKAGE})" ]; then
