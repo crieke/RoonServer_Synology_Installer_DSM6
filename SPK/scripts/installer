@@ -13,14 +13,15 @@ preinst ()
     if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
         if [ "${wizard_dbimport_path}" != "" ]; then
             if [ ! -d "${wizard_dbimport_path}/RoonServer" ] & [ ! -d "${wizard_dbimport_path}/RAATServer" ]; then
-          #      do_not_proceed="true"
                 echo 'Import Error: Could not find required folders in your specified directory . ("RoonServer", "RAATServer")'
                 exit 1
             fi
         fi
     curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
-
+    
+    ## Removing dummy file 
+    rm "${SYNOPKG_PKGINST_TEMP_DIR}/dummy" 
 }
 
 postinst ()
