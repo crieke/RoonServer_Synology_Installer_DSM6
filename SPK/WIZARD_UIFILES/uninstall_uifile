@@ -2,17 +2,29 @@
 	"step_title": "Export RoonServer database?",
 	"items": [{
 		"type": "textfield",
-		"desc": "OPTIONAL: Specify a path if you want to export your library to a location on your Synology drive. (e.g. /volume1/music). A folder named \"Roon_Database_DATE_TIME\" will be created stored there. If you don't export, the database folder on your device will be deleted. The database does not contain your added media files.",
+		"desc": "OPTIONAL: Specify a path if you want to export your library to a location on your Synology drive. (e.g. /volume1/music). A folder named \"Roon_Database_DATE_TIME\" will be deleted. The database does not contain your added media files.",
 		"subitems": [{
 			"key": "wizard_dbexport_path",
 			"desc": "Database export location",
+			"emptyText": "e.g. \"/volume1/music\"",
 			"validator": {
 				"allowBlank": true,
 				"regex": {
 					"expr": "/^\\\/volume[0-9]+\\\//",
-					"errorText": "Path should begin with /volume?/ with ? the number of the volume"
-				}
+					"errorText": "Path should begin with /volume?/ with ? the number of the volume."
+					}
 			}
 		}]
+	},
+	{
+                "type": "multiselect",
+                "desc": "Confirm Database deletion if no export path is specified.",
+                "subitems": [{
+                        "key": "confirm_db_delete",
+                        "desc": "Yes, I entered an export path or want to delete my Roon Database!",
+               			"validator": {
+			   				"fn": "{var v=arguments[0]; if (!v) return 'You need to confirm the uninstall. Be aware that your database is lost if you do not specify an export path.';return true;}"
+			   			}
+				}]
 	}]
 }]
