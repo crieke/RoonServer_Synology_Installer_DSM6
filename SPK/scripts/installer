@@ -19,9 +19,6 @@ preinst ()
         fi
     curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
-    
-    ## Removing dummy file 
-    rm "${SYNOPKG_PKGINST_TEMP_DIR}/dummy" 
 }
 
 postinst ()
