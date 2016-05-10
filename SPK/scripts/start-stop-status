@@ -6,6 +6,8 @@ DNAME="RoonServer"
 USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
 ROON_LOG_DIR="${ROON_DIR}/Roon_Database/RoonServer/Logs"
+ROON_LIB_DIR="${ROON_DIR}/lib"
+
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
@@ -13,14 +15,10 @@ PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
 start_daemon ()
 {
-    # Check for symbolic link of libasound.so.2 in the RoonAppliance folder.
-    LIBASOUND="/var/packages/RoonServer/target/lib/libasound.so.2"
-    if [ -f $LIBASOUND ] && [ ! -h "${ROON_DIR}/RoonServer/Appliance/libasound.so.2" ]; then 
-        ln -s $LIBASOUND "${ROON_DIR}/RoonServer/Appliance/libasound.so.2"
-    fi
+    LIBASOUND="/var/packages/RoonServer/target/lib"
 
     # Launch the service in the background.
-    su - root -c "umask 000; export ROON_DATAROOT="$ROON_DIR/Roon_Database"; ${ROON_DIR}/RoonServer/start.sh &"
+    su - root -c "umask 000; export ROON_DATAROOT=${ROON_DIR}/Roon_Database; export LD_LIBRARY_PATH=${ROON_LIB_DIR}; ${ROON_DIR}/RoonServer/start.sh &"
 }
 
 stop_daemon ()
