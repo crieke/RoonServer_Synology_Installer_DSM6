@@ -15,8 +15,6 @@ PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
 start_daemon ()
 {
-    LIBASOUND="/var/packages/RoonServer/target/lib"
-
     # Launch the service in the background.
     su - root -c "umask 000; export ROON_DATAROOT=${ROON_DIR}/Roon_Database; export LD_LIBRARY_PATH=${ROON_LIB_DIR}; ${ROON_DIR}/RoonServer/start.sh &"
 }
