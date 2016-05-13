@@ -12,23 +12,4 @@
 
 		}]
 	}]
-},
-{
-	"step_title": "Import a RoonServer database?",
-	"items": [{
-		"type": "textfield",
-		"desc": "OPTIONAL: Specify a path if you would like to import a Roon-Database. The Roon-Database directory should include the 2 folders \"RoonServer\" and \"RAATServer\". If they exist, they will be copied and used for this installation.",
-		"subitems": [{
-			"key": "wizard_dbimport_path",
-			"desc": "Database import location",
-			"emptyText": "e.g. \"/volume1/music/RoonDatabase\"",
-			"validator": {
-				"allowBlank": true,
-				"regex": {
-					"expr": "/^\\\/volume[0-9]+\\\//",
-					"errorText": "Path should begin with \"/volumeX/\" with X the number of the volume."
-				}
-			}
-		}]
-	}]	
 }]
