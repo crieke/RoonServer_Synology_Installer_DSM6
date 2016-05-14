@@ -15,10 +15,12 @@ PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 start_daemon ()
 {
 	# Get the location of RoonServer Share
-	ROONDATALOCATION=`su - root -c "/var/packages/${PACKAGE}/scripts/getmount.sh;"`
+	ROON_DATA_DIR=`su - root -c "/var/packages/${PACKAGE}/scripts/getmount.sh;"`
 
-	# Launch the service in the background.
-	su - root -c "umask 000; export ROON_DATAROOT="${ROONDATALOCATION}/RoonServerData"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; ${ROON_DIR}/RoonServer/start.sh &"
+	# Launch the service in the background if RoonServer share exists.
+	if [ "$ROON_DATA_DIR" != "" ]; then
+		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}/RoonServerData"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; ${ROON_DIR}/RoonServer/start.sh &"
+	fi
 }
 
 stop_daemon ()
