@@ -33,7 +33,7 @@ daemon_status ()
 {
     ## Check with ps command if RoonServer is running. If RoonServer updates itself, the PID changes.
 
-    if [ "$PID" != ""} ] && kill -0 $PID > /dev/null 2>&1; then
+    if [ "$PID" != ""] ] && kill -0 $PID > /dev/null 2>&1; then
         return
     fi
     
