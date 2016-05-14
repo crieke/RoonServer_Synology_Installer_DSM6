@@ -2,7 +2,7 @@
 #Checking for RoonServer share on internal volumes
 ROON_SHARE="RoonServer"
 
-VOLS=`df | grep volume | awk '{print $6}' | sed -n '/USB/!p'`
+VOLS=`ls -d /volume* | sed -n '/USB/!p'`
 for i in $VOLS; do
 		if [ -d "${i}"/"${ROON_SHARE}" ] ; then
 			echo "${i}/${ROON_SHARE}"
