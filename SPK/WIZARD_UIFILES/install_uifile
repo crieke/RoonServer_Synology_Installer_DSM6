@@ -2,7 +2,7 @@
 	"step_title": "Before installing...",
 	"items": [{
 		"type": "multiselect",
-		"desc": "This is an installation script to install RoonServer on Synology devices. Please note that this is not an official release by RoonLabs LLC and therefore will not be supported by them.",
+		"desc": "Create a share <b>\"RoonServer\"</b> before you install. This can also be an external drive. <br><br> <font color=\"red\"> This is an installation script to install RoonServer on Synology devices. Please note that this is not an official release by RoonLabs LLC and therefore will not be supported by them.</font>",
                 "subitems": [{
 			"key": "no_official_support",
 			"desc": "I understand!",
@@ -12,23 +12,4 @@
 
 		}]
 	}]
-},
-{
-	"step_title": "Import a RoonServer database?",
-	"items": [{
-		"type": "textfield",
-		"desc": "OPTIONAL: Specify a path if you would like to import a Roon-Database. The Roon-Database directory should include the 2 folders \"RoonServer\" and \"RAATServer\". If they exist, they will be copied and used for this installation.",
-		"subitems": [{
-			"key": "wizard_dbimport_path",
-			"desc": "Database import location",
-			"emptyText": "e.g. \"/volume1/music/RoonDatabase\"",
-			"validator": {
-				"allowBlank": true,
-				"regex": {
-					"expr": "/^\\\/volume[0-9]+\\\//",
-					"errorText": "Path should begin with \"/volumeX/\" with X the number of the volume."
-				}
-			}
-		}]
-	}]	
 }]

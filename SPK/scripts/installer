@@ -11,24 +11,13 @@ preinst ()
 {
 
     if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
-        if [ "${wizard_dbimport_path}" != "" ]; then
-            if [ ! -d "${wizard_dbimport_path}/RoonServer" ] & [ ! -d "${wizard_dbimport_path}/RAATServer" ]; then
-                echo 'Import Error: Could not find required folders in your specified directory . ("RoonServer", "RAATServer")'
-                exit 1
-            fi
-        fi
-    curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
+	    curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
     fi
 }
 
 postinst ()
 {
-    if [ "${wizard_dbimport_path}" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        mkdir "${SYNOPKG_PKGDEST}/Roon_Database"
-        cp -r "${wizard_dbimport_path}/RoonServer" "${SYNOPKG_PKGDEST}/Roon_Database/RoonServer" > /dev/null 2>&1
-        cp -r "${wizard_dbimport_path}/RAATServer" "${SYNOPKG_PKGDEST}/Roon_Database/RAATServer" > /dev/null 2>&1
-    fi
-
+	exit 0
 }
 
 preuninst ()
@@ -36,21 +25,6 @@ preuninst ()
     # Stop the package
     ${SSS} stop > /dev/null
     
-    ROON_EXPORT_FOLDER="${wizard_dbexport_path}/Roon_Database_$(date +%y%m%d_%H%M%S)"
-
-    #Check user entry export path
-    if [ "$wizard_dbexport_path" != "" ] && [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then
-        if [ -d "${wizard_dbexport_path}" ] && [ ! -d "${ROON_EXPORT_FOLDER}" ]; then
-            mv "${SYNOPKG_PKGDEST}/Roon_Database" "${ROON_EXPORT_FOLDER}"
-            chown -R admin:users "${ROON_EXPORT_FOLDER}"
-            sync
-            echo "Roon-Database exported."
-            exit 0
-        else
-            echo "Export failed! Check your export path entry. Aborting Uninstall."
-            exit 1
-        fi
-    fi
 }
 
 postuninst ()
@@ -67,8 +41,6 @@ postuninst ()
 
 preupgrade ()
 {
-    mv ${SYNOPKG_PKGDEST}/Roon_Database ${SYNOPKG_PKGINST_TEMP_DIR}/Roon_Database
-    mv ${SYNOPKG_PKGDEST}/RoonServer ${SYNOPKG_PKGINST_TEMP_DIR}/RoonServer
     exit 0
 }
 

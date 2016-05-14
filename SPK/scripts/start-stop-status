@@ -7,7 +7,6 @@ USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
 ROON_LOG_DIR="${ROON_DIR}/Roon_Database/RoonServer/Logs"
 ROON_LIB_DIR="${ROON_DIR}/lib"
-
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
@@ -15,8 +14,13 @@ PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
 start_daemon ()
 {
-    # Launch the service in the background.
-    su - root -c "umask 000; export ROON_DATAROOT=${ROON_DIR}/Roon_Database; export LD_LIBRARY_PATH=${ROON_LIB_DIR}; ${ROON_DIR}/RoonServer/start.sh &"
+	# Get the location of RoonServer Share
+	ROON_DATA_DIR=`su - root -c "/var/packages/${PACKAGE}/scripts/getmount.sh;"`
+
+	# Launch the service in the background if RoonServer share exists.
+	if [ "$ROON_DATA_DIR" != "" ]; then
+		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}/RoonServerData"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; ${ROON_DIR}/RoonServer/start.sh &"
+	fi
 }
 
 stop_daemon ()
@@ -29,7 +33,7 @@ daemon_status ()
 {
     ## Check with ps command if RoonServer is running. If RoonServer updates itself, the PID changes.
 
-    if [ "$PID" != ""} ] && kill -0 $PID > /dev/null 2>&1; then
+    if [ "$PID" != ""] ] && kill -0 $PID > /dev/null 2>&1; then
         return
     fi
     
