@@ -19,7 +19,7 @@ start_daemon ()
 
 	# Launch the service in the background if RoonServer share exists.
 	if [ "$ROON_DATA_DIR" != "" ]; then
-		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}/RoonServerData"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; ${ROON_DIR}/RoonServer/start.sh &"
+		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; ${ROON_DIR}/RoonServer/start.sh &"
 	fi
 }
 
