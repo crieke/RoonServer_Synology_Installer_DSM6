@@ -1,13 +1,13 @@
 [{
-	"step_title": "Remove RoonServer?",
+	"step_title": "Remove Roon Server?",
 	"items": [{
                 "type": "multiselect",
-                "desc": "Do you really want to remove RoonServer?",
+                "desc": "Do you really want to remove Roon Server?",
                 "subitems": [{
                         "key": "confirm_roon_remove",
-                        "desc": "Yes, remove RoonServer.",
+                        "desc": "Yes, remove Roon Server.",
                			"validator": {
-			   				"fn": "{var v=arguments[0]; if (!v) return 'Are you sure you want to remove RoonServer from this device?';return true;}"
+			   				"fn": "{var v=arguments[0]; if (!v) return 'Are you sure you want to remove Roon Server from this device?';return true;}"
 			   			}
 				}]
 	}]
