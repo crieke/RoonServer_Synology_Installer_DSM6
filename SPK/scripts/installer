@@ -11,7 +11,20 @@ preinst ()
 {
 
     if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
-	    curl "${ROON_PKG_URL}" | tar xvj -C ${SYNOPKG_PKGINST_TEMP_DIR} > /dev/null 2>&1
+    	pushd /tmp
+		rm -f RoonServer_linuxx64.tar.bz2
+		curl -s -O "${ROON_PKG_URL}"
+		R=$?
+		if [ $R -eq 0 ]; then
+			tar xjf RoonServer_linuxx64.tar.bz2 -C "${SYNOPKG_PKGINST_TEMP_DIR}"
+			R=$?
+		fi
+		rm -f RoonServer_linuxx64.tar.bz2
+		popd
+		if [ $R != 0 ]; then
+			echo "Download Error..."
+		fi
+		return $R
     fi
 }
 
