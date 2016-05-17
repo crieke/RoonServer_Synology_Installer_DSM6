@@ -21,7 +21,7 @@ preinst ()
 		rm -f RoonServer_linuxx64.tar.bz2
 		popd
 		if [ $R != 0 ]; then
-			echo "Could not download installation archive from Roon Labs. Please check your internet connection."
+			echo "Could not download installation archive from Roon Labs website. Please check your internet connection."
 		fi
 		return $R
     fi
@@ -41,8 +41,6 @@ preuninst ()
 
 postuninst ()
 {
-    ## Add an option to export logfiles (like library export)!
-
     # Delete Package directory if it contains nothing.
     if [ ! -d "$(ls -A /usr/syno/etc/packages/${PACKAGE})" ]; then
         rm -Rf /usr/syno/etc/packages/${PACKAGE}
