@@ -2,7 +2,7 @@
 
 # Package
 PACKAGE="RoonServer"
-DNAME="RoonServer"
+DNAME="Roon Server"
 USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
 ROON_LOG_DIR="RoonServer/Logs"
