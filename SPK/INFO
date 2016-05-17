@@ -1,6 +1,6 @@
 package="RoonServer"
 displayname="Roon Server"
-version="Roon Installer Script 1.0-b1"
+version="Roon Installer Script 1.0"
 maintainer="Roon Labs LLC"
 maintainer_url="https://roonlabs.com/"
 distributor="Installer script by Christopher Rieke"
