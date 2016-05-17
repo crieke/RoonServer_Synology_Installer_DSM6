@@ -2,7 +2,6 @@
 
 # Package
 PACKAGE="RoonServer"
-DNAME="RoonServer"
 # Others
 SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
 ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
@@ -22,7 +21,7 @@ preinst ()
 		rm -f RoonServer_linuxx64.tar.bz2
 		popd
 		if [ $R != 0 ]; then
-			echo "Download Error..."
+			echo "Could not download installation archive from Roon Labs. Please check your internet connection."
 		fi
 		return $R
     fi
