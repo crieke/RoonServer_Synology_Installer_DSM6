@@ -25,6 +25,8 @@ start_daemon ()
 	# Launch the service in the background if RoonServer share exists.
 	if [ "$ROON_DATA_DIR" != "" ]; then
 		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}"; "${ROON_DIR}"/RoonServer/start.sh &" 2>&1 >> "${ROON_LOG_FILE}"
+	else
+		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." 2>&1 >> "${ROON_LOG_FILE}"
 	fi
 }
 
