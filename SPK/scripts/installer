@@ -20,7 +20,7 @@ preinst ()
 		fi
 		rm -f RoonServer_linuxx64.tar.bz2
 		popd
-		if [ $R != 0 ]; then
+		if [ $R -ne 0 ]; then
 			echo "Could not download installation archive from Roon Labs website. Please check your internet connection."
 		fi
 		return $R
