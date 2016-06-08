@@ -6,7 +6,7 @@ DNAME="Roon Server"
 USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
 ROON_LOG_FILE="/var/packages/${PACKAGE}/target/RoonServer.log"
-ROON_LIB_DIR="/var/packages/AudioStation/target/lib"
+ROON_LIB_DIR="${ROON_DIR}/lib"
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
 
@@ -19,21 +19,14 @@ start_daemon ()
 	echo "$(date +%d.%m.%y-%H:%M:%S) --- ##### Starting RoonServer #####" >> "${ROON_LOG_FILE}"
 
 	# Get the location of RoonServer Share
-	ROON_DATA_DIR=`su - root -c "/var/packages/${PACKAGE}/scripts/getsharelocation.sh;"`
-	echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DATA_DIR = ${ROON_DATA_DIR}" >> ${ROON_LOG_FILE}
-	
-	#Check if AudioStation is installed
-	if [ ! -d "${ROON_LIB_DIR}" ]; then
-		echo "$(date +%d.%m.%y-%H:%M:%S) --- No ALSA libraries found. Install AudioStation for USB DAC support." >> "${ROON_LOG_FILE}"
-    else
-   		echo "$(date +%d.%m.%y-%H:%M:%S) --- ALSA libraries found. USB DACs should work." >> "${ROON_LOG_FILE}"
-	fi
+	ROON_DATA_DIR=`su - root -c "/var/packages/${PACKAGE}/scripts/getsharelocation.sh;"`	
+	echo "$(date +%d.%m.%y-%H:%M:%S) - ROON_DATA_DIR = ${ROON_DATA_DIR}" 2>&1 >> ${ROON_LOG_FILE}
 	
 	# Launch the service in the background if RoonServer share exists.
 	if [ "$ROON_DATA_DIR" != "" ]; then
 		su - root -c "umask 000; export ROON_DATAROOT="${ROON_DATA_DIR}"; export LD_LIBRARY_PATH="${ROON_LIB_DIR}:${LD_LIBRARY_PATH}"; "${ROON_DIR}"/RoonServer/start.sh" 2>&1 >> "${ROON_LOG_FILE}" &
 	else
-		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
+		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." 2>&1 >> "${ROON_LOG_FILE}"
 	fi
 }
 
