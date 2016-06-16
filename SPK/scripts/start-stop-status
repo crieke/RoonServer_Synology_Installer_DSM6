@@ -1,5 +1,9 @@
 #!/bin/sh
 
+. /etc.defaults/rc.subr
+
+#synorcd=/usr/syno/sbin/synorcd
+
 # Package
 PACKAGE="RoonServer"
 DNAME="Roon Server"
@@ -10,6 +14,7 @@ ROON_LIB_DIR="${ROON_DIR}/lib"
 ALSA_CONF="${ROON_DIR}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
+KERNELMODULE="soundcore snd-page-alloc snd snd-seq-device snd-rawmidi snd-usbmidi-lib snd-usb-lib snd-hwdep snd-timer snd-pcm snd-usb-audio snd-mixer-oss snd-pcm-oss"
 
 
 start_daemon ()
@@ -24,7 +29,8 @@ start_daemon ()
 		
 	# Launch the service in the background if RoonServer share exists.
 	if [ "$ROON_DATA_DIR" != "" ]; then
-		su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
+            SYNOLoadModules $KERNELMODULE 2>&1 >> ${ROON_LOG_FILE}
+            su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
 	else
 		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
 	fi
