@@ -33,6 +33,7 @@ start_daemon ()
             su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
 	else
 		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
+		return 1
 	fi
 }
 
