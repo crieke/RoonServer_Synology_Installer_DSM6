@@ -2,12 +2,12 @@
 	"step_title": "Before installing...",
 	"items": [{
 		"type": "multiselect",
-		"desc": "Create a shared Folder <b>\"RoonServer\"</b> before you install. This can also be on an external drive. <br><br> <font color=\"red\"> This is an installation script to install Roon Server on Synology devices. Please note that this package is not released by Roon Labs LLC and therefore will not be supported by them.</font>",
+		"desc": "Create a shared folder <b>\"RoonServer\"</b> before you install. This can also be on an external drive.",
                 "subitems": [{
-			"key": "no_official_support",
+			"key": "wizard_sharedfolder",
 			"desc": "I understand!",
 			"validator": {
-				"fn": "{var v=arguments[0]; if (!v) return 'Please read the infobox and click on the \"I understand!\" checkbox.';return true;}"
+				"fn": "{var v=arguments[0]; if (!v) return 'Please create the \"RoonServer\" shared folder before you continue.';return true;}"
 			}
 
 		}]

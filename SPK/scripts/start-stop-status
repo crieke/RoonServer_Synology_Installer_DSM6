@@ -2,8 +2,6 @@
 
 . /etc.defaults/rc.subr
 
-#synorcd=/usr/syno/sbin/synorcd
-
 # Package
 PACKAGE="RoonServer"
 DNAME="Roon Server"
