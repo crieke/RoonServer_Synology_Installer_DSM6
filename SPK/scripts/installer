@@ -29,6 +29,9 @@ preinst ()
 
 postinst ()
 {
+	mkdir -p /usr/local/bin
+	ln -s ${INSTALL_DIR}/intofiy-tools/bin/inotifywait /usr/local/bin/inotifywait
+	ln -s ${INSTALL_DIR}/inotify-tools/bin/inotifywatch /usr/local/bin/inotifywatch
 	exit 0
 }
 
@@ -45,7 +48,8 @@ postuninst ()
     if [ ! -d "$(ls -A /usr/syno/etc/packages/${PACKAGE})" ]; then
         rm -Rf /usr/syno/etc/packages/${PACKAGE}
     fi
-
+	rm -f /usr/local/bin/inotifywait
+	rm -f /usr/local/bin/inotifywatch
     exit 0
 }
 
