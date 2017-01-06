@@ -9,7 +9,7 @@ USER="root"
 ROON_DIR="/var/packages/${PACKAGE}/target"
 ROON_LOG_FILE="${ROON_DIR}/RoonServer.log"
 ROON_LIB_DIR="${ROON_DIR}/lib"
-SHARE_WATCHDOG="/var/packages/${PACKAGE}/scripts/share_watchdog"
+SHARE_WATCHDOG="${ROON_DIR}/helper-scripts/share_watchdog"
 ALSA_CONF="${ROON_DIR}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
 PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
@@ -32,7 +32,7 @@ start_daemon ()
 	echo "$(date +%d.%m.%y-%H:%M:%S) --- ##### Starting RoonServer #####" >> "${ROON_LOG_FILE}"
 
 	# Get the location of RoonServer Share
-	ROON_DATA_DIR=`su - root -c "/var/packages/${PACKAGE}/scripts/getsharelocation.sh RoonServer;"`
+	ROON_DATA_DIR=`su - root -c "${ROON_DIR}/helper-scripts/getsharelocation RoonServer;"`
 	echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DATA_DIR = ${ROON_DATA_DIR}" >> ${ROON_LOG_FILE}
 	
 	# Launch Share Watchdog
@@ -43,7 +43,7 @@ start_daemon ()
 	# Launch the service in the background if RoonServer share exists.
 	if [[ "$ROON_DATA_DIR" != "" ]]; then
             SYNOLoadModules $KERNELMODULE 2>&1 >> ${ROON_LOG_FILE}
-            su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1; export ROON_FILEBROWSER_VIRTUAL_MOUNT1=\"fuu:Synology $SYNO_MODEL:$SYNO_HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${ROON_DIR}/mnt\"; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
+            su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1; export ROON_FILEBROWSER_VIRTUAL_MOUNT1=\"${SYNO_SERIAL}:Synology $SYNO_MODEL:$SYNO_HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${ROON_DIR}/mnt\"; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
 	else
 		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
 		return 1
