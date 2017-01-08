@@ -1,0 +1,47 @@
+#!/bin/sh
+#Checking for RoonServer share on internal volumes
+SHARE_CONF_LOC="/usr/syno/etc/share_right.map"
+SHARE_CONF=`cat "${SHARE_CONF_LOC}" | awk -F ' *= *' '{ if ($1 ~ /^\[/) section=$1; else if ($1 !~ /^$/) print $1 section "=" $2 }'`
+
+ROON_SHARE="$@"
+
+SHARE_ID=($(echo "${SHARE_CONF}" | egrep 'display[[:space:]]name.*$' | grep "=${ROON_SHARE}$" | cut -d "[" -f2 | cut -d "]" -f1))
+
+counter=0
+for i in ${SHARE_ID[@]}
+  do
+  SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
+  if [[ ! -d "$SHARE_PATH" ]]; then
+     SHARE_ID=( "${SHARE_ID[@]/$i}" )
+  else
+     ((counter++))
+     SHARE_VAL="$SHARE_PATH"
+fi
+done
+
+## Check for esata drives if no share could be found...
+## Their share name can't be renamed. Using the comment field instead.
+
+if [[ $counter -eq 0 ]]; then
+   SHARE_ID=($(echo "${SHARE_CONF}" | egrep 'comment.*$' | grep "=${ROON_SHARE}$" | cut -d "[" -f2 | cut -d "]" -f1))
+   for i in ${SHARE_ID[@]}
+      do
+      SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
+      DEVICE_PATH=`df | grep "${SHARE_PATH}" | awk '{print $1}'`
+      STORAGE_SERIAL=`hdparm -I $DEVICE_PATH | grep "Serial Number" | awk '{print $3}'`
+      if [[ "$STORAGE_SERIAL" == "${i::-3}" ]]; then
+         if [[ ! -d "$SHARE_PATH" ]]; then
+            SHARE_ID=( "${SHARE_ID[@]/$i}" )
+         else
+            ((counter++))
+            echo "Counter: "$counter
+            SHARE_VAL="$SHARE_PATH"
+         fi
+	  fi
+   done
+
+fi
+
+if [[ $counter -eq 1 ]]; then
+   echo "${SHARE_VAL}"
+fi
