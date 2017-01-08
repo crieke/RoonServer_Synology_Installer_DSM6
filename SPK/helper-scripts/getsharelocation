@@ -9,35 +9,45 @@ SHARE_ID=($(echo "${SHARE_CONF}" | egrep 'display[[:space:]]name.*$' | grep "=${
 
 counter=0
 for i in ${SHARE_ID[@]}
-  do
-  SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
-  if [[ ! -d "$SHARE_PATH" ]]; then
-     SHARE_ID=( "${SHARE_ID[@]/$i}" )
-  else
-     ((counter++))
-     SHARE_VAL="$SHARE_PATH"
-fi
-done
+   do
+   addShare=true
+   SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
+   SHARE_NAME=`echo "${SHARE_CONF}" | grep "display name\[$i\]" | cut -d "=" -f 2`
+   if [[ $(dirname $SHARE_PATH) = *"volumeUSB"* ]]; then
+     DEVICECONNECTED=`echo "${SHARE_CONF}" | grep "guid\[$SHARE_NAME\]" | cut -d "=" -f 2`
+     if [[ $DEVICECONNECTED != $i ]]; then
+	    addShare=false
+     fi
+   fi
 
-## Check for esata drives if no share could be found...
-## Their share name can't be renamed. Using the comment field instead.
+   if $addShare; then
+      ((counter++))
+	  SHARE_VAL="$SHARE_PATH"
+   else
+      SHARE_ID=( "${SHARE_ID[@]/$i}" )
+   fi
+done
 
 if [[ $counter -eq 0 ]]; then
    SHARE_ID=($(echo "${SHARE_CONF}" | egrep 'comment.*$' | grep "=${ROON_SHARE}$" | cut -d "[" -f2 | cut -d "]" -f1))
    for i in ${SHARE_ID[@]}
-      do
-      SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
-      DEVICE_PATH=`df | grep "${SHARE_PATH}" | awk '{print $1}'`
-      STORAGE_SERIAL=`hdparm -I $DEVICE_PATH | grep "Serial Number" | awk '{print $3}'`
-      if [[ "$STORAGE_SERIAL" == "${i::-3}" ]]; then
-         if [[ ! -d "$SHARE_PATH" ]]; then
-            SHARE_ID=( "${SHARE_ID[@]/$i}" )
-         else
-            ((counter++))
-            echo "Counter: "$counter
-            SHARE_VAL="$SHARE_PATH"
-         fi
+   do
+      addShare=true
+	  SHARE_PATH=($(echo "${SHARE_CONF}" | grep "path\[$i\]\=" | cut -d "[" -f2 | cut -d "=" -f2))
+   SHARE_NAME=`echo "${SHARE_CONF}" | grep "display name\[$i\]" | cut -d "=" -f 2`
+      if [[ $(dirname $SHARE_PATH) = *"volumeSATA"* ]]; then
+         DEVICECONNECTED=`echo "${SHARE_CONF}" | grep "guid\[$SHARE_NAME\]" | cut -d "=" -f 2`
+         if [[ $DEVICECONNECTED != $i ]]; then
+		       addShare=false
+		 fi
 	  fi
+
+   if $addShare; then
+       ((counter++))
+	   SHARE_VAL="$SHARE_PATH"
+	else
+	   SHARE_ID=( "${SHARE_ID[@]/$i}" )
+	fi
    done
 
 fi
