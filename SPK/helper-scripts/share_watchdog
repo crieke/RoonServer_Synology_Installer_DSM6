@@ -1,0 +1,60 @@
+#!/bin/sh
+PACKAGE="RoonServer"
+ROON_MNT_DIR="/var/packages/${PACKAGE}/target/mnt"
+ROON_MNT_TMP_DIR="/var/packages/${PACKAGE}/target/mnt2"
+SHARE_CONF_LOC="/usr/syno/etc/share_right.map"
+CMD_INOTIFYWAIT="/var/packages/${PACKAGE}/target/roon-inotify-tools/bin/inotifywait"
+
+rebuild_symlinks() {
+#Restructuring Share config file to contain the sections name in each line.
+SHARE_CONF=`cat "${SHARE_CONF_LOC}" | awk -F ' *= *' '{ if ($1 ~ /^\[/) section=$1; else if ($1 !~ /^$/) print $1 section "=" $2 }'`
+
+# Create temporary mnt directory
+mkdir "$ROON_MNT_TMP_DIR"
+
+### CHECKING THE SHARE CONFIG FILE FOR ROONSERVER SHARES AND GET ITS NAME OR GUID
+SHARE_ID=($(echo "${SHARE_CONF}" | egrep 'display[[:space:]]name.*$' | cut -d "[" -f2 | cut -d "]" -f1))
+
+### Check if Section contains a path
+if [[ ${#SHARE_ID[@]} -ne 0  ]]; then
+   for i in ${SHARE_ID[@]} 
+   do
+      addShare=true
+      currentObject=$i 
+      SHARE_PATH=`echo "${SHARE_CONF}" | grep "path\[$currentObject\]" | cut -d "=" -f 2`
+      SHARE_NAME=`echo "${SHARE_CONF}" | grep "display name\[$currentObject\]" | cut -d "=" -f 2`
+
+      ## Checking if share is a USB/eSATA device by checking the path
+      if [[ $(dirname $SHARE_PATH) = *"volumeUSB"* ]] || [[ $(dirname $SHARE_PATH) = *"volumeSATA"* ]]
+      then 
+         # If USB/eSATA device is connected there will be a 'guid["ShareName"]=id' line.
+         DEVICECONNECTED=`echo "${SHARE_CONF}" | grep "guid\[$SHARE_NAME\]" | cut -d "=" -f 2`
+         if [[ $DEVICECONNECTED != $i ]]
+         then
+            addShare=false
+         fi
+      fi
+    
+	  if $addShare; then
+	  	echo "$SHARE_NAME:  $SHARE_PATH   ( -> "$ROON_MNT_TMP_DIR/$SHARE_NAME" )"
+		ln -sf "$SHARE_PATH" "$ROON_MNT_TMP_DIR/$SHARE_NAME"
+	  fi
+   done
+
+   # Removing old mnt directory and renaming "mnt2" to "mnt"
+   mv "$ROON_MNT_DIR" "$ROON_MNT_DIR.old"
+   mv "$ROON_MNT_TMP_DIR" "$ROON_MNT_DIR"
+   rm -R "$ROON_MNT_DIR.old"
+fi
+}
+
+rebuild_symlinks
+
+while true; do
+	$CMD_INOTIFYWAIT -e modify,delete_self "$SHARE_CONF_LOC" | while read xx; do
+		echo "Modification detected!"
+		sleep 1 
+		rebuild_symlinks
+	done
+done
+
