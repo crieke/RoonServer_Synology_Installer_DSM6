@@ -12,7 +12,7 @@ ROON_LIB_DIR="${ROON_DIR}/lib"
 SHARE_WATCHDOG="${ROON_DIR}/helper-scripts/share_watchdog"
 ALSA_CONF="${ROON_DIR}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
-PID=`( ps -Awwo pid,args | grep "[R]oonServer " | awk '{print $1}' )`
+ROON_PIDFILE="${ROON_DIR}/RoonServer.pid"
 KERNELMODULE="soundcore snd-page-alloc snd snd-seq-device snd-rawmidi snd-usbmidi-lib snd-usb-lib snd-hwdep snd-timer snd-pcm snd-usb-audio snd-mixer-oss snd-pcm-oss"
 SYNO_MODEL=`cat /etc/synoinfo.conf | grep upnpmodelname | cut -d '"' -f2`
 SYNO_SERIAL=`sysctl -a | grep "kernel.syno_serial"|  awk '{print $3}'`
@@ -21,9 +21,13 @@ SYNO_BUILD=`sysctl -a | grep kernel.version | awk '{print $3}'`
 CHECK_JUMBO=`sysctl -a | grep net.ipv6.conf.eth[0-9].mtu | awk '{print $3}'`
 ROON_WATCHDOG_PIDFILE="/var/packages/${PACKAGE}/RoonWatchdog.pid"
 
+if [[ -f $ROON_PIDFILE ]]; then
+   PID=`cat "${ROON_PIDFILE}"`
+fi
+
 if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
     WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
-	fi
+fi
 
 start_daemon ()
 {
@@ -37,22 +41,28 @@ start_daemon ()
 	
 	# Launch Share Watchdog
     setsid $SHARE_WATCHDOG &
-	PID2=$!
-	echo $PID2 > "$ROON_WATCHDOG_PIDFILE"
+	echo $! >"$ROON_WATCHDOG_PIDFILE"
 
 	# Launch the service in the background if RoonServer share exists.
 	if [[ "$ROON_DATA_DIR" != "" ]]; then
             SYNOLoadModules $KERNELMODULE 2>&1 >> ${ROON_LOG_FILE}
-            su - root -c "umask 000; export ROON_DATAROOT=${ROON_DATA_DIR}; export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1; export ROON_FILEBROWSER_VIRTUAL_MOUNT1=\"${SYNO_SERIAL}:Synology $SYNO_MODEL:$SYNO_HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${ROON_DIR}/mnt\"; export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; export ALSA_CONFIG_PATH=${ALSA_CONF}; ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE}" &
-	else
-		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
-		return 1
+			export ROON_DATAROOT=${ROON_DATA_DIR} 
+			export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1 
+			export ROON_FILEBROWSER_VIRTUAL_MOUNT1="${SYNO_SERIAL}:Synology $SYNO_MODEL:$SYNO_HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${ROON_DIR}/mnt" 
+			export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
+			export ALSA_CONFIG_PATH=${ALSA_CONF}
+			setsid ${ROON_DIR}/RoonServer/start.sh 2>&1 >> ${ROON_LOG_FILE} &
+			echo $! > ${ROON_PIDFILE}
+   else
+		    echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." >> "${ROON_LOG_FILE}"
+		    return 1
 	fi
 }
 
 stop_daemon ()
 {
-    kill $PID
+    echo "Roon PID to be killed: " $PID
+    kill -- -$PID
     wait_for_status 1 20 || kill -9 $PID
    	echo "$(date +%d.%m.%y-%H:%M:%S) --- ##### RoonServer has been stopped. #####" >> "${ROON_LOG_FILE}"
     echo "Watchdog PID to be killed: " $WATCHDOG_PID
