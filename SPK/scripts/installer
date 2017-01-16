@@ -12,8 +12,8 @@ preinst ()
 {
   	ROON_DATA_DIR=`${SYNOPKG_PKGINST_TEMP_DIR}/helper-scripts/getsharelocation RoonServer`
 
-    if [[ -f ${ROON_DATA_DIR}/INSTALL_ALPHA ]]; then
-        ALPHA=$(<${ROON_DATA_DIR}/INSTALL_ALPHA)
+    if [[ -f ${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt ]]; then
+        ALPHA=$(<${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt)
         
         if [[ ${ALPHA:0:4} == "http" ]]  && [[ $(basename ${ALPHA}) == $(basename ${ROON_PKG_URL}) ]]; then
             ROON_PKG_URL="${ALPHA}"
