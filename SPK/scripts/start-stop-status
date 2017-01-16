@@ -29,7 +29,7 @@ fi
 
 if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
     WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
-	fi
+fi
 
 start_daemon ()
 {
@@ -41,6 +41,13 @@ start_daemon ()
 
 	# Launch the service in the background if RoonServer share exists.
 	if [[ "$ROON_DATA_DIR" != "" ]]; then
+
+	        if [[ -f $ROON_DATA_DIR/ROON_DEBUG_ARG.txt ]]; then
+                ROON_ARGS=`cat "$ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
+            else
+                ROON_ARGS=""
+            fi
+
             echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DIR: ${ROON_DIR}" | tee -a "${ROON_LOG_FILE}"
             echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Build: ${SYNO_BUILD}" | tee -a "${ROON_LOG_FILE}"
             echo "$(date +%d.%m.%y-%H:%M:%S) --- Packet Size: "${CHECK_JUMBO} | tee -a "${ROON_LOG_FILE}"
@@ -49,6 +56,7 @@ start_daemon ()
 			echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Hostname: ${SYNO_HOSTNAME}" | tee -a "${ROON_LOG_FILE}"
             echo "$(date +%d.%m.%y-%H:%M:%S) --- Arch: ${ARCH}" | tee -a "${ROON_LOG_FILE}"
             echo "$(date +%d.%m.%y-%H:%M:%S) --- SPK Version:" ${SYNO_SPK_VER} | tee -a "${ROON_LOG_FILE}"
+            echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DEBUG_ARGs: ${ROON_ARGS}" | tee -a "${ROON_LOG_FILE}"
 			echo "" | tee -a "${ROON_LOG_FILE}"
 			echo "" | tee -a "${ROON_LOG_FILE}"
 			echo "########## Installed RoonServer Version ##########" | tee -a "${ROON_LOG_FILE}"
@@ -68,7 +76,7 @@ start_daemon ()
             echo "$(date +%d.%m.%y-%H:%M:%S) --- Watchdog PID: "`cat ${ROON_WATCHDOG_PIDFILE}` | tee -a "${ROON_LOG_FILE}"
 
             # Launch RoonServer
-            ( setsid ${ROON_DIR}/RoonServer/start.sh & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
+            ( setsid ${ROON_DIR}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
             echo "$(date +%d.%m.%y-%H:%M:%S) --- RoonServer PID: "`cat ${ROON_PIDFILE}` | tee -a "${ROON_LOG_FILE}"
    else
 		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
