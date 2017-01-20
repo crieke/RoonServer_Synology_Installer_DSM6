@@ -42,8 +42,8 @@ start_daemon ()
 	# Launch the service in the background if RoonServer share exists.
 	if [[ "$ROON_DATA_DIR" != "" ]]; then
 
-	        if [[ -f $ROON_DATA_DIR/ROON_DEBUG_ARG.txt ]]; then
-                ROON_ARGS=`cat "$ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
+	        if [[ -f $ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt ]]; then
+                ROON_ARGS=`cat "$ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt" | xargs | sed "s/ ---- /\n---- /g"`
             else
                 ROON_ARGS=""
             fi
