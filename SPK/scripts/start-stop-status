@@ -6,22 +6,45 @@
 PACKAGE="RoonServer"
 DNAME="Roon Server"
 USER="root"
-ROON_DIR="/var/packages/${PACKAGE}/target"
-ROON_LOG_FILE="${ROON_DIR}/RoonServer.log"
-ROON_LIB_DIR="${ROON_DIR}/lib"
-SHARE_WATCHDOG="${ROON_DIR}/helper-scripts/share_watchdog"
-ALSA_CONF="${ROON_DIR}/etc/alsa/alsa.conf"
+
+SPK_ROOT="/var/packages/${PACKAGE}/target"
+ROON_LOG_FILE="${SPK_ROOT}/RoonServer.log"
+ROON_LIB_DIR="${SPK_ROOT}/lib"
+ROON_DATABASE_DIR=`su - root -c "${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
+SHARE_WATCHDOG="${SPK_ROOT}/helper-scripts/share_watchdog"
+ALSA_CONF="${SPK_ROOT}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
-ROON_PIDFILE="${ROON_DIR}/RoonServer.pid"
+ROON_PIDFILE="${SPK_ROOT}/RoonServer.pid"
 KERNELMODULE="soundcore snd-page-alloc snd snd-seq-device snd-rawmidi snd-usbmidi-lib snd-usb-lib snd-hwdep snd-timer snd-pcm snd-usb-audio snd-mixer-oss snd-pcm-oss"
 SYNO_MODEL=`cat /etc/synoinfo.conf | grep upnpmodelname | cut -d '"' -f2`
 SYNO_SERIAL=`sysctl -a | grep "kernel.syno_serial"|  awk '{print $3}'`
-SYNO_HOSTNAME=`sysctl -a | grep "kernel.hostname"|  awk '{print $3}'`
 SYNO_BUILD=`sysctl -a | grep kernel.version | awk '{print $3}'`
 SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" -f 2`
-ROON_VERSION=`cat "${ROON_DIR}/RoonServer/VERSION"`
-CHECK_JUMBO=`sysctl -a | grep net.ipv6.conf.eth[0-9].mtu | awk '{print $3}'`
-ROON_WATCHDOG_PIDFILE="${ROON_DIR}/RoonWatchdog.pid"
+ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
+MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
+ROON_WATCHDOG_PIDFILE="${SPK_ROOT}/RoonWatchdog.pid"
+
+ST_COLOR="\033[38;5;34m"
+HL_COLOR="\033[38;5;197m"
+REG_COLOR="\033[0m"
+
+## Log Function
+echolog() {
+    TIMESTAMP=$(date +%d.%m.%y-%H:%M:%S)${REG_COLOR}
+	if [[ $# == 2 ]]; then
+        PARAMETER1=$1
+        PARAMETER2=$2
+        echo -e "${ST_COLOR}${TIMESTAMP}${REG_COLOR} --- ${HL_COLOR}${PARAMETER1}:${REG_COLOR} ${PARAMETER2}"
+        echo "${TIMESTAMP} --- ${PARAMETER1}: ${PARAMETER2}" >> $ROON_LOG_FILE
+    elif [[ $# == 1 ]]; then
+        PARAMETER1=$1
+        echo -e "${ST_COLOR}${TIMESTAMP}${REG_COLOR} --- ${PARAMETER1}"
+        echo "${TIMESTAMP} --- ${PARAMETER1}" >> $ROON_LOG_FILE
+    else
+        echo -e "The echolog function requires 1 or 2 parameters."
+    fi
+}
+
 
 if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
    PID=`cat "${ROON_PIDFILE}"`
@@ -31,67 +54,76 @@ if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
     WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
 fi
 
+info ()
+{
+   ## Echoing System Info
+    echolog "ROON_DATABASE_DIR" "${ROON_DATABASE_DIR}"
+    echolog "ROON_DIR" "${SPK_ROOT}"
+	echolog "Model" "${SYNO_MODEL}"
+    echolog "Synology Serial" "${SYNO_SERIAL}"
+    echolog "Architecture" "${ARCH}"
+    echolog "Synology Build" "${SYNO_BUILD}"
+    echolog "PKG Version" "${SYNO_SPK_VER}"
+    echolog "Hostname" "${HOSTNAME}"
+    echolog "MTU" "${MTU}"
+}
+
+
 start_daemon ()
 {
-	# Start a new log file.
-	# Get the location of RoonServer Share
-	ROON_DATA_DIR=`su - root -c "${ROON_DIR}/helper-scripts/getsharelocation RoonServer;"`
-	echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DATA_DIR = ${ROON_DATA_DIR}" | tee -a ${ROON_LOG_FILE}
-    echo "$(date +%d.%m.%y-%H:%M:%S) --- ##### Starting RoonServer #####" | tee "${ROON_LOG_FILE}"
-
 	# Launch the service in the background if RoonServer share exists.
-	if [[ "$ROON_DATA_DIR" != "" ]]; then
+	if [[ "$ROON_DATABASE_DIR" != "" ]]; then
+		
+		   info
 
-	        if [[ -f $ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt ]]; then
-                ROON_ARGS=`cat "$ROON_DATA_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt" | xargs | sed "s/ ---- /\n---- /g"`
+	        if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_ARG.txt ]]; then
+                ROON_ARGS=`cat "$ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
             else
                 ROON_ARGS=""
             fi
 
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DIR: ${ROON_DIR}" | tee -a "${ROON_LOG_FILE}"
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Build: ${SYNO_BUILD}" | tee -a "${ROON_LOG_FILE}"
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- Packet Size: "${CHECK_JUMBO} | tee -a "${ROON_LOG_FILE}"
-			echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Model: ${SYNO_MODEL}" | tee -a "${ROON_LOG_FILE}"
-			echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Serial: ${SYNO_SERIAL}" | tee -a "${ROON_LOG_FILE}"
-			echo "$(date +%d.%m.%y-%H:%M:%S) --- Synology Hostname: ${SYNO_HOSTNAME}" | tee -a "${ROON_LOG_FILE}"
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- Arch: ${ARCH}" | tee -a "${ROON_LOG_FILE}"
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- SPK Version:" ${SYNO_SPK_VER} | tee -a "${ROON_LOG_FILE}"
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- ROON_DEBUG_ARGs: ${ROON_ARGS}" | tee -a "${ROON_LOG_FILE}"
-			echo "" | tee -a "${ROON_LOG_FILE}"
+            echolog "ROON_DEBUG_ARGS" "${ROON_ARGS}"
+
+			SYNOLoadModules $KERNELMODULE 2>&1 | tee -a ${ROON_LOG_FILE}
+
+            ## Exporting Vars
+            export ROON_DATAROOT=${ROON_DATABASE_DIR} 
+            export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1 
+            export ROON_FILEBROWSER_VIRTUAL_MOUNT1="${SYNO_SERIAL}:Synology $SYNO_MODEL:$HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${SPK_ROOT}/mnt" 
+            export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
+            export ALSA_CONFIG_PATH=${ALSA_CONF}
+
+            # Launch Share Watchdog
+            ( setsid $SHARE_WATCHDOG & echo $! >&3 ) 3>$ROON_WATCHDOG_PIDFILE | tee -a ${ROON_LOG_FILE} &
+            echolog "Watchdog PID" "`cat ${ROON_WATCHDOG_PIDFILE}`"
+
+            # Launch RoonServer
+            ( setsid ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
+            echolog "RoonServer PID" "`cat ${ROON_PIDFILE}`"
+            
+            echo "" | tee -a "${ROON_LOG_FILE}"
 			echo "" | tee -a "${ROON_LOG_FILE}"
 			echo "########## Installed RoonServer Version ##########" | tee -a "${ROON_LOG_FILE}"
 			echo "${ROON_VERSION}" | tee -a "${ROON_LOG_FILE}"
 			echo "##################################################" | tee -a "${ROON_LOG_FILE}" 
 			echo "" | tee -a "${ROON_LOG_FILE}"
 			echo "" | tee -a "${ROON_LOG_FILE}"
-			SYNOLoadModules $KERNELMODULE 2>&1 | tee -a ${ROON_LOG_FILE}
-            export ROON_DATAROOT=${ROON_DATA_DIR} 
-            export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1 
-            export ROON_FILEBROWSER_VIRTUAL_MOUNT1="${SYNO_SERIAL}:Synology $SYNO_MODEL:$SYNO_HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${ROON_DIR}/mnt" 
-            export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
-            export ALSA_CONFIG_PATH=${ALSA_CONF}
 
-            # Launch Share Watchdog
-            ( setsid $SHARE_WATCHDOG & echo $! >&3 ) 3>$ROON_WATCHDOG_PIDFILE | tee -a ${ROON_LOG_FILE} &
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- Watchdog PID: "`cat ${ROON_WATCHDOG_PIDFILE}` | tee -a "${ROON_LOG_FILE}"
-
-            # Launch RoonServer
-            ( setsid ${ROON_DIR}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
-            echo "$(date +%d.%m.%y-%H:%M:%S) --- RoonServer PID: "`cat ${ROON_PIDFILE}` | tee -a "${ROON_LOG_FILE}"
    else
-		echo "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
+		echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
 		return 1
 	fi
 }
 
 stop_daemon ()
 {
-    echo "$(date +%d.%m.%y-%H:%M:%S) --- Roon PID to be killed: " $PID | tee -a ${ROON_LOG_FILE}
+    echolog "Roon PID to be killed" "$PID"
     kill -- -$PID | tee -a ${ROON_LOG_FILE}
     wait_for_status 1 20 || kill -9 $PID
-   	echo "$(date +%d.%m.%y-%H:%M:%S) --- ##### RoonServer has been stopped. #####" | tee -a "${ROON_LOG_FILE}"
-    echo "$(date +%d.%m.%y-%H:%M:%S) --- Watchdog PID to be killed: " $WATCHDOG_PID | tee -a ${ROON_LOG_FILE}
+    echolog "Watchdog PID to be killed" "$WATCHDOG_PID"
     kill -- -$WATCHDOG_PID | tee -a ${ROON_LOG_FILE}
+    wait_for_watchdog 1 20 || kill -9 $WATCHDOG_PID
+	echolog "##### RoonServer has been stopped. #####"
 }
 
 daemon_status ()
@@ -100,7 +132,14 @@ daemon_status ()
     if [[ "$PID" != "" ]] && kill -0 $PID > /dev/null 2>&1; then
         return
     fi
-    
+    return 1
+}
+
+watchdog_status ()
+{
+    if [[ "$WATCHDOG_PID" != "" ]] && kill -0 $WATCHDOG_PID > /dev/null 2>&1; then
+        return
+    fi
     return 1
 }
 
@@ -116,19 +155,31 @@ wait_for_status ()
     return 1
 }
 
+wait_for_watchdog ()
+{
+    counter=$2
+    while [[ ${counter} -gt 0 ]]; do
+        watchdog_status
+        [[ $? -eq $1 ]] && return
+        let counter=counter-1
+        sleep 1
+    done
+    return 1
+}
 
 case $1 in
     start)
         if daemon_status; then
             echo ${DNAME} is already running
         else
-            echo Starting ${DNAME} ...
+            echo "" > $ROON_LOG_FILE
+            echolog "Starting ${DNAME} ..."
             start_daemon
         fi
         ;;
     stop)
         if daemon_status; then
-            echo Stopping ${DNAME} ...
+            echolog "Stopping ${DNAME}..."
             stop_daemon
         else
             echo ${DNAME} is not running
