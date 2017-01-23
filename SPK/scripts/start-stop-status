@@ -6,7 +6,6 @@
 PACKAGE="RoonServer"
 DNAME="Roon Server"
 USER="root"
-
 SPK_ROOT="/var/packages/${PACKAGE}/target"
 ROON_LOG_FILE="${SPK_ROOT}/RoonServer.log"
 ROON_LIB_DIR="${SPK_ROOT}/lib"
@@ -18,7 +17,8 @@ ROON_PIDFILE="${SPK_ROOT}/RoonServer.pid"
 KERNELMODULE="soundcore snd-page-alloc snd snd-seq-device snd-rawmidi snd-usbmidi-lib snd-usb-lib snd-hwdep snd-timer snd-pcm snd-usb-audio snd-mixer-oss snd-pcm-oss"
 SYNO_MODEL=`cat /etc/synoinfo.conf | grep upnpmodelname | cut -d '"' -f2`
 SYNO_SERIAL=`sysctl -a | grep "kernel.syno_serial"|  awk '{print $3}'`
-SYNO_BUILD=`sysctl -a | grep kernel.version | awk '{print $3}'`
+SYNO_VERSION=`cat /etc/VERSION | grep productversion | cut -d '"' -f2 | cut -d '"' -f1`
+SYNO_SMALL_FIX=`cat /etc/VERSION | grep smallfixnumber | cut -d '"' -f2 | cut -d '"' -f1`
 SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" -f 2`
 ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
 MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
@@ -26,7 +26,7 @@ ROON_WATCHDOG_PIDFILE="${SPK_ROOT}/RoonWatchdog.pid"
 ROON_DEBUG_EXTERNAL_LOG="${ROON_DATABASE_DIR}/ROON_DEBUG_EXTERNAL_LOG.txt"
 
 if [[ -f $ROON_DEBUG_EXTERNAL_LOG ]]; then
-                ROON_LOG_FILE=$ROON_DEBUG_EXTERNAL_LOG
+    ROON_LOG_FILE=$ROON_DEBUG_EXTERNAL_LOG
 fi
 
 ST_COLOR="\033[38;5;34m"
@@ -59,6 +59,10 @@ if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
     WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
 fi
 
+if [[ $SYNO_SMALL_FIX != "" ]]; then
+   SYNO_SMALL_FIX="(Update ${SYNO_SMALL_FIX})"
+fi
+
 info ()
 {
    ## Echoing System Info
@@ -67,7 +71,7 @@ info ()
 	echolog "Model" "${SYNO_MODEL}"
     echolog "Synology Serial" "${SYNO_SERIAL}"
     echolog "Architecture" "${ARCH}"
-    echolog "Synology Build" "${SYNO_BUILD}"
+    echolog "DSM Version" "${SYNO_VERSION} ${SYNO_SMALL_FIX}"
     echolog "PKG Version" "${SYNO_SPK_VER}"
     echolog "Hostname" "${HOSTNAME}"
     echolog "MTU" "${MTU}"
