@@ -59,8 +59,10 @@ if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
     WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
 fi
 
-if [[ $SYNO_SMALL_FIX != "" ]]; then
+if [[ $SYNO_SMALL_FIX -gt 0 ]]; then
    SYNO_SMALL_FIX="(Update ${SYNO_SMALL_FIX})"
+else
+   SYNO_SMALL_FIX="";
 fi
 
 info ()
@@ -98,7 +100,7 @@ start_daemon ()
             ## Exporting Vars
             export ROON_DATAROOT=${ROON_DATABASE_DIR} 
             export ROON_FILEBROWSER_IGNORE_ALL_MOUNTS=1 
-            export ROON_FILEBROWSER_VIRTUAL_MOUNT1="${SYNO_SERIAL}:Synology $SYNO_MODEL:$HOSTNAME, $SYNO_SERIAL, $SYNO_BUILD:${SPK_ROOT}/mnt" 
+            export ROON_FILEBROWSER_VIRTUAL_MOUNT1="${SYNO_SERIAL}:Synology $SYNO_MODEL:$HOSTNAME, $SYNO_SERIAL, DSM ${SYNO_VERSION}:${SPK_ROOT}/mnt" 
             export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
             export ALSA_CONFIG_PATH=${ALSA_CONF}
 
