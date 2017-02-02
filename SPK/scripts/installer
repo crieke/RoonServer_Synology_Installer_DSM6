@@ -5,18 +5,16 @@ PACKAGE="RoonServer"
 # Others
 SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
 ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
-INOTIFY_DIR="/usr/local/inotify-tools"
-PATH="${INOTIFY_DIR}/bin:${PATH}"
 
 preinst ()
 {
   	ROON_DATA_DIR=`${SYNOPKG_PKGINST_TEMP_DIR}/helper-scripts/getsharelocation RoonServer`
 
     if [[ -f ${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt ]]; then
-        ALPHA=$(<${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt)
+        CUSTOM_INSTALL_URL=$(<${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt)
         
-        if [[ ${ALPHA:0:4} == "http" ]]  && [[ $(basename ${ALPHA}) == $(basename ${ROON_PKG_URL}) ]]; then
-            ROON_PKG_URL="${ALPHA}"
+        if [[ ${CUSTOM_INSTALL_URL:0:4} == "http" ]]  && [[ $(basename ${CUSTOM_INSTALL_URL}) == $(basename ${ROON_PKG_URL}) ]]; then
+            ROON_PKG_URL="${CUSTOM_INSTALL_URL}"
         fi
     fi
 
@@ -40,15 +38,6 @@ preinst ()
 
 postinst ()
 {
-	ln -s ${SYNOPKG_PKGDEST}/roon-inotify-tools ${INOTIFY_DIR}
-	
-	ln -s ${INOTIFY_DIR}/lib/libinotifytools.so.0.4.1 ${INOTIFY_DIR}/lib/libinotifytools.so
-	ln -s ${INOTIFY_DIR}/lib/libinotifytools.so.0.4.1 ${INOTIFY_DIR}/lib/libinotifytools.so.0
-
-	
-	mkdir -p /usr/local/bin
-	ln -s ${INOTIFY_DIR}/bin/inotifywait /usr/local/bin/inotifywait
-	ln -s ${INOTIFY_DIR}/bin/inotifywatch /usr/local/bin/inotifywatch
 	exit 0
 }
 
@@ -65,10 +54,6 @@ postuninst ()
     if [ ! -d "$(ls -A /usr/syno/etc/packages/${PACKAGE})" ]; then
         rm -Rf /usr/syno/etc/packages/${PACKAGE}
     fi
-    
-    rm -f ${INOTIFY_DIR}
-	rm -f /usr/local/bin/inotifywait
-	rm -f /usr/local/bin/inotifywatch
     exit 0
 }
 

@@ -10,7 +10,6 @@ SPK_ROOT="/var/packages/${PACKAGE}/target"
 ROON_LOG_FILE="${SPK_ROOT}/RoonServer.log"
 ROON_LIB_DIR="${SPK_ROOT}/lib"
 ROON_DATABASE_DIR=`su - root -c "${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
-SHARE_WATCHDOG="${SPK_ROOT}/helper-scripts/share_watchdog"
 ALSA_CONF="${SPK_ROOT}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
 ROON_PIDFILE="${SPK_ROOT}/RoonServer.pid"
@@ -22,7 +21,6 @@ SYNO_SMALL_FIX=`cat /etc/VERSION | grep smallfixnumber | cut -d '"' -f2 | cut -d
 SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" -f 2`
 ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
 MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
-ROON_WATCHDOG_PIDFILE="${SPK_ROOT}/RoonWatchdog.pid"
 ROON_DEBUG_EXTERNAL_LOG="${ROON_DATABASE_DIR}/ROON_DEBUG_EXTERNAL_LOG.txt"
 
 if [[ -f $ROON_DEBUG_EXTERNAL_LOG ]]; then
@@ -35,7 +33,7 @@ REG_COLOR="\033[0m"
 
 ## Log Function
 echolog() {
-    TIMESTAMP=$(date +%d.%m.%y-%H:%M:%S)${REG_COLOR}
+    TIMESTAMP=$(date +%d.%m.%y-%H:%M:%S)
 	if [[ $# == 2 ]]; then
         PARAMETER1=$1
         PARAMETER2=$2
@@ -50,13 +48,8 @@ echolog() {
     fi
 }
 
-
-if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
+if [[ -f $ROON_PIDFILE ]]; then
    PID=`cat "${ROON_PIDFILE}"`
-fi
-
-if [[ -f $ROON_WATCHDOG_PIDFILE ]]; then
-    WATCHDOG_PID=`cat "${ROON_WATCHDOG_PIDFILE}"`
 fi
 
 if [[ $SYNO_SMALL_FIX -gt 0 ]]; then
@@ -104,12 +97,8 @@ start_daemon ()
             export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
             export ALSA_CONFIG_PATH=${ALSA_CONF}
 
-            # Launch Share Watchdog
-            ( setsid $SHARE_WATCHDOG & echo $! >&3 ) 3>$ROON_WATCHDOG_PIDFILE | tee -a ${ROON_LOG_FILE} &
-            echolog "Watchdog PID" "`cat ${ROON_WATCHDOG_PIDFILE}`"
-
             # Launch RoonServer
-            ( setsid ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
+            ( ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
             echolog "RoonServer PID" "`cat ${ROON_PIDFILE}`"
             
             echo "" | tee -a "${ROON_LOG_FILE}"
@@ -129,11 +118,8 @@ start_daemon ()
 stop_daemon ()
 {
     echolog "Roon PID to be killed" "$PID"
-    kill -- -$PID | tee -a ${ROON_LOG_FILE}
+    kill $PID | tee -a ${ROON_LOG_FILE}
     wait_for_status 1 20 || kill -9 $PID
-    echolog "Watchdog PID to be killed" "$WATCHDOG_PID"
-    kill -- -$WATCHDOG_PID | tee -a ${ROON_LOG_FILE}
-    wait_for_watchdog 1 20 || kill -9 $WATCHDOG_PID
 	echolog "##### RoonServer has been stopped. #####"
 }
 
@@ -146,31 +132,11 @@ daemon_status ()
     return 1
 }
 
-watchdog_status ()
-{
-    if [[ "$WATCHDOG_PID" != "" ]] && kill -0 $WATCHDOG_PID > /dev/null 2>&1; then
-        return
-    fi
-    return 1
-}
-
 wait_for_status ()
 {
     counter=$2
     while [[ ${counter} -gt 0 ]]; do
         daemon_status
-        [[ $? -eq $1 ]] && return
-        let counter=counter-1
-        sleep 1
-    done
-    return 1
-}
-
-wait_for_watchdog ()
-{
-    counter=$2
-    while [[ ${counter} -gt 0 ]]; do
-        watchdog_status
         [[ $? -eq $1 ]] && return
         let counter=counter-1
         sleep 1
