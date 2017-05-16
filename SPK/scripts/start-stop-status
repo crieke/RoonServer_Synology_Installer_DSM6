@@ -34,7 +34,7 @@ REG_COLOR="\033[0m"
 ## Log Function
 echolog() {
     TIMESTAMP=$(date +%d.%m.%y-%H:%M:%S)
-	if [[ $# == 2 ]]; then
+    if [[ $# == 2 ]]; then
         PARAMETER1=$1
         PARAMETER2=$2
         echo -e "${ST_COLOR}${TIMESTAMP}${REG_COLOR} --- ${HL_COLOR}${PARAMETER1}:${REG_COLOR} ${PARAMETER2}"
@@ -60,10 +60,10 @@ fi
 
 info ()
 {
-   ## Echoing System Info
+    ## Echoing System Info
     echolog "ROON_DATABASE_DIR" "${ROON_DATABASE_DIR}"
     echolog "ROON_DIR" "${SPK_ROOT}"
-	echolog "Model" "${SYNO_MODEL}"
+    echolog "Model" "${SYNO_MODEL}"
     echolog "Synology Serial" "${SYNO_SERIAL}"
     echolog "Architecture" "${ARCH}"
     echolog "DSM Version" "${SYNO_VERSION} ${SYNO_SMALL_FIX}"
@@ -75,50 +75,51 @@ info ()
 
 start_daemon ()
 {
-	# Launch the service in the background if RoonServer share exists.
-	if [[ "$ROON_DATABASE_DIR" != "" ]]; then
-		
-		   info
+    # Launch the service in the background if RoonServer share exists.
+    if [[ "$ROON_DATABASE_DIR" != "" ]]; then
+        
+        info
+        if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_ARG.txt ]]; then
+            ROON_ARGS=`cat "$ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
+        else
+            ROON_ARGS=""
+        fi
 
-	        if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_ARG.txt ]]; then
-                ROON_ARGS=`cat "$ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
-            else
-                ROON_ARGS=""
-            fi
+        echolog "ROON_DEBUG_ARGS" "${ROON_ARGS}"
 
-            echolog "ROON_DEBUG_ARGS" "${ROON_ARGS}"
+        SYNOLoadModules $KERNELMODULE 2>&1 | tee -a ${ROON_LOG_FILE}
 
-			SYNOLoadModules $KERNELMODULE 2>&1 | tee -a ${ROON_LOG_FILE}
+        # Launch RoonServer
+        su - root -c "\
+        export ROON_DATAROOT=${ROON_DATABASE_DIR}; \
+        export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; \
+        export ALSA_CONFIG_PATH=${ALSA_CONF}; \
+        ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS &\
+        echo \$! > ${ROON_PIDFILE}"
+        
+        echolog "RoonServer PID" "`cat ${ROON_PIDFILE}`"
 
-            ## Exporting Vars
-            export ROON_DATAROOT=${ROON_DATABASE_DIR} 
-            export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}
-            export ALSA_CONFIG_PATH=${ALSA_CONF}
+        echo "" | tee -a "${ROON_LOG_FILE}"
+        echo "" | tee -a "${ROON_LOG_FILE}"
+        echo "########## Installed RoonServer Version ##########" | tee -a "${ROON_LOG_FILE}"
+        echo "${ROON_VERSION}" | tee -a "${ROON_LOG_FILE}"
+        echo "##################################################" | tee -a "${ROON_LOG_FILE}" 
+        echo "" | tee -a "${ROON_LOG_FILE}"
+        echo "" | tee -a "${ROON_LOG_FILE}"
 
-            # Launch RoonServer
-            ( ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS & echo $! >&3 ) 3>$ROON_PIDFILE | tee -a ${ROON_LOG_FILE} &
-            echolog "RoonServer PID" "`cat ${ROON_PIDFILE}`"
-            
-            echo "" | tee -a "${ROON_LOG_FILE}"
-			echo "" | tee -a "${ROON_LOG_FILE}"
-			echo "########## Installed RoonServer Version ##########" | tee -a "${ROON_LOG_FILE}"
-			echo "${ROON_VERSION}" | tee -a "${ROON_LOG_FILE}"
-			echo "##################################################" | tee -a "${ROON_LOG_FILE}" 
-			echo "" | tee -a "${ROON_LOG_FILE}"
-			echo "" | tee -a "${ROON_LOG_FILE}"
-
-   else
-		echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
-		return 1
-	fi
+    else
+        echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
+        return 1
+    fi
 }
 
 stop_daemon ()
 {
     echolog "Roon PID to be killed" "$PID"
-    kill $PID | tee -a ${ROON_LOG_FILE}
+    kill $PID | tee -a "${ROON_LOG_FILE}"
     wait_for_status 1 20 || kill -9 $PID
-	echolog "##### RoonServer has been stopped. #####"
+    echolog "##### RoonServer has been stopped. #####"
+    rm "${ROON_PIDFILE}"
 }
 
 daemon_status ()
