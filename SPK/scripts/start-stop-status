@@ -20,7 +20,7 @@ SYNO_VERSION=`cat /etc/VERSION | grep productversion | cut -d '"' -f2 | cut -d '
 SYNO_SMALL_FIX=`cat /etc/VERSION | grep smallfixnumber | cut -d '"' -f2 | cut -d '"' -f1`
 SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" -f 2`
 ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
-MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
+MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
 ROON_DEBUG_EXTERNAL_LOG="${ROON_DATABASE_DIR}/ROON_DEBUG_EXTERNAL_LOG.txt"
 
 if [[ -f $ROON_DEBUG_EXTERNAL_LOG ]]; then
