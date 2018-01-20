@@ -77,9 +77,9 @@ start_daemon ()
 {
     # Launch the service in the background if RoonServer share exists.
     if [[ "$ROON_DATABASE_DIR" != "" ]]; then
-        
+
         info
-        if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_ARG.txt ]]; then
+        if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt ]]; then
             ROON_ARGS=`cat "$ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
         else
             ROON_ARGS=""
@@ -96,14 +96,14 @@ start_daemon ()
         export ALSA_CONFIG_PATH=${ALSA_CONF}; \
         ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS &\
         echo \$! > ${ROON_PIDFILE}"
-        
+
         echolog "RoonServer PID" "`cat ${ROON_PIDFILE}`"
 
         echo "" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
         echo "########## Installed RoonServer Version ##########" | tee -a "${ROON_LOG_FILE}"
         echo "${ROON_VERSION}" | tee -a "${ROON_LOG_FILE}"
-        echo "##################################################" | tee -a "${ROON_LOG_FILE}" 
+        echo "##################################################" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
 
