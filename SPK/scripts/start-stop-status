@@ -22,6 +22,7 @@ SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" 
 ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
 MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
 ROON_DEBUG_EXTERNAL_LOG="${ROON_DATABASE_DIR}/ROON_DEBUG_EXTERNAL_LOG.txt"
+AVAILABLE_INODES=`cat /proc/sys/fs/inotify/max_user_watches`
 
 if [[ -f $ROON_DEBUG_EXTERNAL_LOG ]]; then
     ROON_LOG_FILE=$ROON_DEBUG_EXTERNAL_LOG
@@ -30,6 +31,12 @@ fi
 ST_COLOR="\033[38;5;34m"
 HL_COLOR="\033[38;5;197m"
 REG_COLOR="\033[0m"
+
+## Increase inode amount to handle all file watch nodes by Roon
+if [[ $AVAILABLE_INODES -lt 1000000 ]]; then
+    sysctl fs.inotify.max_user_watches=1000000
+    AVAILABLE_INODES=`cat /proc/sys/fs/inotify/max_user_watches`
+fi
 
 ## Log Function
 echolog() {
@@ -70,6 +77,7 @@ info ()
     echolog "PKG Version" "${SYNO_SPK_VER}"
     echolog "Hostname" "${HOSTNAME}"
     echolog "MTU" "${MTU}"
+    echolog "INODES" "${AVAILABLE_INODES}"
 }
 
 
