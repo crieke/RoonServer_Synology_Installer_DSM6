@@ -81,11 +81,45 @@ info ()
 }
 
 
+checkdb_and_start ()
+{
+    database_dir_count=0
+    database_dir_avail_count=0
+
+        while [ $database_dir_count -lt 5 ]; do
+            if [ "$ROON_DATABASE_DIR" != "" ]; then
+                echolog "Database storage location set!"
+                database_dir_count=10
+                while [ $database_dir_avail_count -lt 5 ]; do
+                    if [ -d "$ROON_DATABASE_DIR" ]; then
+                        echolog "Database location is available."
+                        database_dir_avail_count=10
+                        start_daemon
+                    else
+                        echolog "[$(( $database_dir_avail_count + 1 ))|5]: Database location not available or ecternal storage is not yet mounted."
+                        database_dir_avail_count=$(( $database_dir_avail_count + 1 ))
+                        sleep 5 
+                    fi
+                done
+            else
+                echolog "[$(( $database_dir_count + 1 ))|5]: Database location could not be retrieved."
+                database_dir_count=$(( $database_dir_count + 1 ))
+                sleep 5
+                ROON_DATABASE_DIR=`"${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
+            fi
+       done
+
+        if [ $database_dir_count -eq 5 ] || [ $database_dir_avail_count -eg 5 ]; then 
+            echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
+            return 1
+        fi
+
+}
+
+
 start_daemon ()
 {
     # Launch the service in the background if RoonServer share exists.
-    if [[ "$ROON_DATABASE_DIR" != "" ]]; then
-
         info
         if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt ]]; then
             ROON_ARGS=`cat "$ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt"`
@@ -114,11 +148,6 @@ start_daemon ()
         echo "##################################################" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
-
-    else
-        echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
-        return 1
-    fi
 }
 
 stop_daemon ()
@@ -158,7 +187,7 @@ case $1 in
         else
             echo "" > $ROON_LOG_FILE
             echolog "Starting ${DNAME} ..."
-            start_daemon
+            checkdb_and_start
         fi
         ;;
     stop)
