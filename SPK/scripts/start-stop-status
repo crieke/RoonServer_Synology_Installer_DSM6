@@ -7,9 +7,11 @@ PACKAGE="RoonServer"
 DNAME="Roon Server"
 USER="root"
 SPK_ROOT="/var/packages/${PACKAGE}/target"
-ROON_LOG_FILE="${SPK_ROOT}/RoonServer.log"
 ROON_LIB_DIR="${SPK_ROOT}/lib"
-ROON_DATABASE_DIR=`su - root -c "${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
+ROON_ID_DIR="${SPK_ROOT}/id"
+ROON_DATABASE_REAL_PATH=`su - root -c "${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
+ROON_DATABASE_DIR="/mnt/RoonServerDB-Mount"
+ROON_LOG_FILE="$ROON_DATABASE_REAL_PATH/ROONSERVER_SYNOLOGY_LOG.txt"
 ALSA_CONF="${SPK_ROOT}/etc/alsa/alsa.conf"
 ARCH=$(uname -m)
 ROON_PIDFILE="${SPK_ROOT}/RoonServer.pid"
@@ -19,14 +21,14 @@ SYNO_SERIAL=`sysctl -a | grep "kernel.syno_serial"|  awk '{print $3}'`
 SYNO_VERSION=`cat /etc/VERSION | grep productversion | cut -d '"' -f2 | cut -d '"' -f1`
 SYNO_SMALL_FIX=`cat /etc/VERSION | grep smallfixnumber | cut -d '"' -f2 | cut -d '"' -f1`
 SYNO_SPK_VER=`cat /var/packages/${PACKAGE}/INFO | grep "version=" | cut -d "\"" -f 2`
+SYNO_MEMTOTAL=`awk '/MemTotal/ {print $2}' /proc/meminfo`
+SYNO_MEMFREE=`awk '/MemFree/ {print $2}' /proc/meminfo`
+ROON_DATABASE_DIR_FS=`df -PThi "${ROON_DATABASE_REAL_PATH}" | awk '{print $2}' | tail -1`
+ROON_DATABASE_DIR_FREE_INODES=`df -PThi "${ROON_DATABASE_DIR}" | awk '{print $5}' | tail -1`
 ROON_VERSION=`cat "${SPK_ROOT}/RoonServer/VERSION"`
-MTU=`ifconfig | grep eth[0-9] -A1 | grep MTU | cut -d ":" -f 2 | awk '{print $1}' | xargs | sed "s/ ---- /\n---- /g"`
+MTU=`ip addr | grep eth | grep -oP '(?<=mtu )[^ ]*'`
 ROON_DEBUG_EXTERNAL_LOG="${ROON_DATABASE_DIR}/ROON_DEBUG_EXTERNAL_LOG.txt"
 AVAILABLE_INODES=`cat /proc/sys/fs/inotify/max_user_watches`
-
-if [[ -f $ROON_DEBUG_EXTERNAL_LOG ]]; then
-    ROON_LOG_FILE=$ROON_DEBUG_EXTERNAL_LOG
-fi
 
 ST_COLOR="\033[38;5;34m"
 HL_COLOR="\033[38;5;197m"
@@ -69,56 +71,34 @@ info ()
 {
     ## Echoing System Info
     echolog "ROON_DATABASE_DIR" "${ROON_DATABASE_DIR}"
+    echolog "ROON_DATABASE_REAL_PATH" "${ROON_DATABASE_REAL_PATH}"
+    echolog "ROON_DATABASE_DIR_FS" "${ROON_DATABASE_DIR_FS}"
+    echolog "Free Inodes" "${ROON_DATABASE_DIR_FREE_INODES}"
     echolog "ROON_DIR" "${SPK_ROOT}"
     echolog "Model" "${SYNO_MODEL}"
     echolog "Synology Serial" "${SYNO_SERIAL}"
     echolog "Architecture" "${ARCH}"
+    echolog "Total Memory" "${SYNO_MEMTOTAL}"
+    echolog "Available Memory" "${SYNO_MEMFREE}"
     echolog "DSM Version" "${SYNO_VERSION} ${SYNO_SMALL_FIX}"
     echolog "PKG Version" "${SYNO_SPK_VER}"
     echolog "Hostname" "${HOSTNAME}"
-    echolog "MTU" "${MTU}"
+    echolog "MTU" ${MTU}
     echolog "INODES" "${AVAILABLE_INODES}"
 }
 
-
-checkdb_and_start ()
-{
-    database_dir_count=0
-    database_dir_avail_count=0
-
-        while [ $database_dir_count -lt 5 ]; do
-            if [ "$ROON_DATABASE_DIR" != "" ]; then
-                echolog "Database storage location set!"
-                database_dir_count=10
-                while [ $database_dir_avail_count -lt 5 ]; do
-                    if [ -d "$ROON_DATABASE_DIR" ]; then
-                        echolog "Database location is available."
-                        database_dir_avail_count=10
-                        start_daemon
-                    else
-                        echolog "[$(( $database_dir_avail_count + 1 ))|5]: Database location not available or ecternal storage is not yet mounted."
-                        database_dir_avail_count=$(( $database_dir_avail_count + 1 ))
-                        sleep 5 
-                    fi
-                done
-            else
-                echolog "[$(( $database_dir_count + 1 ))|5]: Database location could not be retrieved."
-                database_dir_count=$(( $database_dir_count + 1 ))
-                sleep 5
-                ROON_DATABASE_DIR=`"${SPK_ROOT}/helper-scripts/getsharelocation RoonServer;"`
-            fi
-       done
-
-        if [ $database_dir_count -eq 5 ] || [ $database_dir_avail_count -eg 5 ]; then 
-            echolog "ERROR: Shared folder \"RoonServer\" could not be found. Please create it in the DSM before launching the package." | tee -a "${ROON_LOG_FILE}"
-            return 1
-        fi
-
-}
-
-
 start_daemon ()
-{
+{ 
+    if [ "$ROON_DATABASE_REAL_PATH"x != "x" ] && [ -d "$ROON_DATABASE_REAL_PATH" ]; then
+
+    su - root -c "mkdir ${ROON_DATABASE_DIR}"
+
+    # Mount non-writable image on db directory (as a backup, if a USB device gets disconnected)
+    su - root -c "mount -t ext4 -o loop -r \"${SPK_ROOT}/db-dummy.img\"  \"${ROON_DATABASE_DIR}\""
+
+    # Bind-mount real database directory on top of the dummy fs
+    su - root -c "mount -o bind \"${ROON_DATABASE_REAL_PATH}\"  \"${ROON_DATABASE_DIR}\""
+
     # Launch the service in the background if RoonServer share exists.
         info
         if [[ -f $ROON_DATABASE_DIR/ROON_DEBUG_LAUNCH_PARAMETERS.txt ]]; then
@@ -136,6 +116,7 @@ start_daemon ()
         export ROON_DATAROOT=${ROON_DATABASE_DIR}; \
         export LD_LIBRARY_PATH=${ROON_LIB_DIR}:${LD_LIBRARY_PATH}; \
         export ALSA_CONFIG_PATH=${ALSA_CONF}; \
+        export ROON_ID_DIR="${ROON_ID_DIR}"; \
         ${SPK_ROOT}/RoonServer/start.sh $ROON_ARGS &\
         echo \$! > ${ROON_PIDFILE}"
 
@@ -148,6 +129,18 @@ start_daemon ()
         echo "##################################################" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
         echo "" | tee -a "${ROON_LOG_FILE}"
+    else
+        echolog "RoonServer shared folder does not exist or external storage device has not been setup properly."
+    fi
+}
+clean_up ()
+{
+    # unmount database dir
+    su - root -c "umount \"${ROON_DATABASE_DIR}\""
+    # unmount dummy-db-fs
+    su - root -c "umount \"${ROON_DATABASE_DIR}\""
+    # remove mnt directory
+    su - root -c "rmdir \"${ROON_DATABASE_DIR}\""
 }
 
 stop_daemon ()
@@ -157,6 +150,8 @@ stop_daemon ()
     wait_for_status 1 20 || kill -9 $PID
     echolog "##### RoonServer has been stopped. #####"
     rm "${ROON_PIDFILE}"
+
+    clean_up
 }
 
 daemon_status ()
@@ -187,7 +182,7 @@ case $1 in
         else
             echo "" > $ROON_LOG_FILE
             echolog "Starting ${DNAME} ..."
-            checkdb_and_start
+            start_daemon
         fi
         ;;
     stop)
