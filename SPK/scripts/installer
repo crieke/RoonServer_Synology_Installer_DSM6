@@ -5,10 +5,13 @@ PACKAGE="RoonServer"
 # Others
 SSS="/var/packages/${PACKAGE}/scripts/start-stop-status"
 ROON_PKG_URL="http://download.roonlabs.com/builds/RoonServer_linuxx64.tar.bz2"
-
+ROON_ARCHIVE="${ROON_PKG_URL##*/}"
+R=0
 preinst ()
 {
   	ROON_DATA_DIR=`${SYNOPKG_PKGINST_TEMP_DIR}/helper-scripts/getsharelocation RoonServer`
+  	ROON_PUBLIC_DIR=`${SYNOPKG_PKGINST_TEMP_DIR}/helper-scripts/getsharelocation public`
+  	ROON_OFFLINE_ARCHIVE="${ROON_PUBLIC_DIR}/${ROON_ARCHIVE}"
 
     if [[ -f ${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt ]]; then
         CUSTOM_INSTALL_URL=$(<${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt)
@@ -18,22 +21,51 @@ preinst ()
         fi
     fi
 
-    if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
-    	pushd /tmp
-		rm -f RoonServer_linuxx64.tar.bz2
-		curl -s -O "${ROON_PKG_URL}"
-		R=$?
-		if [ $R -eq 0 ]; then
-			tar xjf RoonServer_linuxx64.tar.bz2 -C "${SYNOPKG_PKGINST_TEMP_DIR}"
-			R=$?
-		fi
-		rm -f RoonServer_linuxx64.tar.bz2
-		popd
-		if [ $R -ne 0 ]; then
-			echo "Could not download installation archive from Roon Labs website. Please check your internet connection."
-		fi
-		return $R
+    if [ ! -d "$ROON_DATA_DIR" ]; then
+        R=1
+        ERRORMESSAGE="\"<b>RoonServer</b>\" (case-sensitive!) needs to be manually created before installation.<br>You can also rename an external USB volume to \"RoonServer\".<br>(eSata drives cannot be renamed, use the description field here)."
     fi
+
+    if [ $R -eq 0 ]; then
+        if [ "${SYNOPKG_PKG_STATUS}" != "UPGRADE" ]; then 
+            if [ -f ${ROON_OFFLINE_ARCHIVE} ]; then
+                pushd /tmp > /dev/null
+                rm -f RoonServer_linuxx64.tar.bz2
+                cp "${ROON_OFFLINE_ARCHIVE}" /tmp/ > /dev/null
+                R=$?
+                if [ $R -ne 0 ]; then
+                    ERRORMESSAGE="Local installation archive in public-Share could not been copied to the tmp directory."
+
+                fi
+            else
+                pushd /tmp > /dev/null
+                rm -f RoonServer_linuxx64.tar.bz2
+                curl -s -O "${ROON_PKG_URL}"
+                R=$?
+                if [ $R -ne 0 ]; then
+                    PKGDOMAIN=`echo "$ROON_PKG_URL" | awk -F/ '{print $3}'`
+                    DOMAINCHECK=`/bin/curl -sL -w "%{http_code} %{url_effective}\\n" "$PKGDOMAIN" -o /dev/null | awk '{print $1}'`
+                    TMPSPACE=`/bin/df -Ph /tmp | tail -1 | awk '{print $4}'`
+                    wait 5;
+                    ERRORMESSAGE="Could not download installation archive from Roon Labs website. Please check your internet connection.<br><b>URL:</b> $ROON_PKG_URL<br><b>HTTP status code:</b> $DOMAINCHECK<br><b>Available space in /tmp:</b> $TMPSPACE"
+                fi
+            fi
+            if [ $R -eq 0 ]; then
+                tar xjf RoonServer_linuxx64.tar.bz2 -C "${SYNOPKG_PKGINST_TEMP_DIR}" > /dev/null
+                R=$?
+                if [ $R -ne 0 ]; then
+                    ERRORMESSAGE="An error occured while extracting the installation archive. The archive might be corrupt or the tmp directory has no space left."
+                fi
+
+            fi
+            rm -f RoonServer_linuxx64.tar.bz2
+            popd > /dev/null
+        fi
+    fi
+    if [ $R -ne 0 ]; then
+	    echo "$ERRORMESSAGE"
+	fi
+	return $R
 }
 
 postinst ()
