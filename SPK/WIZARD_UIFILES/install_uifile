@@ -2,10 +2,10 @@
 	"step_title": "Before installing...",
 	"items": [{
 		"type": "multiselect",
-		"desc": "Create a shared folder <b>\"RoonServer\"</b> before you install. This can also be on an external drive.",
+		"desc": "<h4>Create a shared folder \"<b>RoonServer</b>\" (case-sensitive!) before you install.</h4><br><br>The shared folder has to be set up in the shared folder section of your Diskstation's Control Panel<br>and can be:<br>&#8226; a regular shared folder on your internal storage drives.<br>&#8226; an external USB storage device, which has been renamed to \"RoonServer\".<br>&#8226; an eSata storage device with \"RoonServer\" entered in the description field.<br>&nbsp;",
                 "subitems": [{
 			"key": "wizard_sharedfolder",
-			"desc": "I understand!",
+			"desc": "I already took care of it.",
 			"validator": {
 				"fn": "{var v=arguments[0]; if (!v) return 'Please create the \"RoonServer\" shared folder before you continue.';return true;}"
 			}
