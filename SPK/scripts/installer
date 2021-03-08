@@ -13,7 +13,7 @@ preinst ()
   	ROON_PUBLIC_DIR=`${SYNOPKG_PKGINST_TEMP_DIR}/helper-scripts/getsharelocation public`
   	ROON_OFFLINE_ARCHIVE="${ROON_PUBLIC_DIR}/${ROON_ARCHIVE}"
 
-    if [[ -f ${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt ]]; then
+    if [ -f ${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt ]; then
         CUSTOM_INSTALL_URL=$(<${ROON_DATA_DIR}/ROON_DEBUG_INSTALL_URL.txt)
         
         if [[ ${CUSTOM_INSTALL_URL:0:4} == "http" ]]  && [[ $(basename ${CUSTOM_INSTALL_URL}) == $(basename ${ROON_PKG_URL}) ]]; then
@@ -70,6 +70,10 @@ preinst ()
 
 postinst ()
 {
+  if [ ! -d ${SYNOPKG_PKGDEST}/id ]; then
+    mkdir  ${SYNOPKG_PKGDEST}/id
+  fi
+  
 	exit 0
 }
 
@@ -92,6 +96,7 @@ postuninst ()
 preupgrade ()
 {
     mv ${SYNOPKG_PKGDEST}/RoonServer ${SYNOPKG_PKGINST_TEMP_DIR}/RoonServer
+    mv ${SYNOPKG_PKGDEST}/id ${SYNOPKG_PKGINST_TEMP_DIR}/id
     exit 0
 }
 
