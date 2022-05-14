@@ -40,7 +40,7 @@ preinst ()
             else
                 pushd /tmp > /dev/null
                 rm -f RoonServer_linuxx64.tar.bz2
-                curl -s -O "${ROON_PKG_URL}"
+                curl -sOL "${ROON_PKG_URL}"
                 R=$?
                 if [ $R -ne 0 ]; then
                     PKGDOMAIN=`echo "$ROON_PKG_URL" | awk -F/ '{print $3}'`
